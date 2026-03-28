@@ -1,4 +1,4 @@
-import { Home, Search, Bell, Mail, User, ChefHat, CalendarDays, ListChecks, Settings, LogOut, Feather } from 'lucide-react';
+import { Home, Search, Bell, Mail, User, ChefHat, CalendarDays, ListChecks, Settings, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,19 +98,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Post Button */}
-        {user && (
-          <div className="px-3 pt-4">
-            <Button
-              variant="hero"
-              size={collapsed ? 'icon' : 'lg'}
-              className="w-full rounded-full"
-              onClick={() => navigate('/compose')}
-            >
-              {collapsed ? <Feather className="h-5 w-5" /> : 'Post'}
-            </Button>
-          </div>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">

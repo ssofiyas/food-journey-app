@@ -42,11 +42,11 @@ export default function Feed() {
       if (userIds.length > 0) {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('id, full_name, username, avatar_url')
-          .in('id', userIds);
+          .select('user_id, full_name, username, avatar_url')
+          .in('user_id', userIds);
         if (profileData) {
           const map: Record<string, Profile> = {};
-          profileData.forEach((p: any) => { map[p.id] = p; });
+          profileData.forEach((p: any) => { map[p.user_id] = p; });
           setProfiles(map);
         }
       }

@@ -51,7 +51,7 @@ export default function Profile() {
       const { data } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', profileId)
+        .eq('user_id', profileId)
         .single();
       if (data) setProfile(data as any);
 
