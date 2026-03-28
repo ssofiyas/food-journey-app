@@ -96,6 +96,47 @@ export type Database = {
           },
         ]
       }
+      meal_plans: {
+        Row: {
+          created_at: string
+          custom_meal: string | null
+          date: string
+          id: string
+          meal_type: string
+          notes: string | null
+          recipe_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_meal?: string | null
+          date: string
+          id?: string
+          meal_type?: string
+          notes?: string | null
+          recipe_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_meal?: string | null
+          date?: string
+          id?: string
+          meal_type?: string
+          notes?: string | null
+          recipe_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           comments_count: number | null
@@ -177,6 +218,87 @@ export type Database = {
           user_id?: string
           username?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      recipes: {
+        Row: {
+          cook_time: number
+          created_at: string
+          cuisine: string | null
+          description: string | null
+          difficulty: string
+          id: string
+          image_url: string | null
+          ingredients: Json
+          instructions: Json
+          meal_type: string
+          prep_time: number
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cook_time?: number
+          created_at?: string
+          cuisine?: string | null
+          description?: string | null
+          difficulty?: string
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          instructions?: Json
+          meal_type?: string
+          prep_time?: number
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cook_time?: number
+          created_at?: string
+          cuisine?: string | null
+          description?: string | null
+          difficulty?: string
+          id?: string
+          image_url?: string | null
+          ingredients?: Json
+          instructions?: Json
+          meal_type?: string
+          prep_time?: number
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
