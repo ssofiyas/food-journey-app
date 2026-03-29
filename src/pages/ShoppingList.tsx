@@ -166,6 +166,11 @@ export default function ShoppingList() {
                 </Button>
               </div>
 
+              {/* AI Suggestions */}
+              <div className="mb-4">
+                <AISuggestions onAddItem={(name, qty, cat) => addItem(name, qty, cat)} />
+              </div>
+
               {/* Items */}
               <div className="space-y-1">
                 {activeList.items.filter(i => !i.checked).map((item, idx) => {
