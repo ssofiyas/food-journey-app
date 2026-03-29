@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Check, ShoppingCart, X } from 'lucide-react';
+import { Plus, Trash2, Check, ShoppingCart, X, Sparkles, Loader2, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { AISuggestions } from '@/components/AISuggestions';
+import { FridgeRaid } from '@/components/FridgeRaid';
 
 interface ShoppingItem {
   name: string;
@@ -21,6 +22,8 @@ interface ShoppingListData {
   created_at: string;
 }
 
+type TabView = 'lists' | 'fridge-raid';
+
 export default function ShoppingList() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -29,6 +32,8 @@ export default function ShoppingList() {
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [newListName, setNewListName] = useState('');
+  const [activeView, setActiveView] = useState<TabView>('lists');
+  const [generatingList, setGeneratingList] = useState(false);
 
   const fetchLists = async () => {
     if (!user) return;
@@ -91,17 +96,110 @@ export default function ShoppingList() {
     fetchLists();
   };
 
+  const generateFromRecipes = async () => {
+    if (!user) return;
+    setGeneratingList(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // Get user's recipes
+      const { data: recipes } = await supabase.from('recipes').select('id, title').eq('user_id', user.id).limit(10);
+      if (!recipes || recipes.length === 0) {
+        toast({ title: 'No recipes', description: 'Add some recipes first to generate a shopping list', variant: 'destructive' });
+        return;
+      }
+
+      // Get pantry items
+      const { data: pantry } = await supabase.from('pantry_items').select('name').eq('user_id', user.id);
+      const pantryNames = pantry?.map((p: any) => p.name) || [];
+
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-shopping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ recipe_ids: recipes.map(r => r.id), pantry_items: pantryNames }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || 'Generation failed');
+      }
+
+      const result = await resp.json();
+
+      // Create new list with AI-generated items
+      const items: ShoppingItem[] = (result.items || []).map((item: any) => ({
+        name: `${item.name} (${item.quantity})`,
+        quantity: item.quantity,
+        checked: false,
+        category: item.category || 'Other',
+      }));
+
+      const { data: newList } = await supabase.from('shopping_lists').insert({
+        user_id: user.id,
+        name: `AI List - ${new Date().toLocaleDateString()}`,
+        items: items as any,
+      }).select().single();
+
+      if (newList) {
+        setActiveListId((newList as any).id);
+        fetchLists();
+        toast({
+          title: 'Shopping list generated!',
+          description: result.summary || `${items.length} items from ${recipes.length} recipes`,
+        });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setGeneratingList(false);
+    }
+  };
+
   const checkedCount = activeList?.items.filter(i => i.checked).length || 0;
   const totalCount = activeList?.items.length || 0;
 
+  // Group items by category
+  const uncheckedItems = activeList?.items.filter(i => !i.checked) || [];
+  const checkedItems = activeList?.items.filter(i => i.checked) || [];
+  const categories = [...new Set(uncheckedItems.map(i => i.category))].sort();
+
   return (
     <div className="flex-1 border-r border-border max-w-2xl">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-4 py-3">
-        <h1 className="font-display text-xl font-bold text-foreground">Shopping Lists</h1>
+      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+          <h1 className="font-display text-xl font-bold text-foreground">Shopping</h1>
+          <Button
+            variant="hero"
+            size="sm"
+            className="rounded-full gap-1.5 text-xs"
+            onClick={generateFromRecipes}
+            disabled={generatingList}
+          >
+            {generatingList ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            Generate from Recipes
+          </Button>
+        </div>
+        <div className="flex">
+          {(['lists', 'fridge-raid'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveView(tab)}
+              className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+                activeView === tab ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:bg-muted/50'
+              }`}
+            >
+              {tab === 'lists' ? 'Shopping Lists' : '🧊 Fridge Raid'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {loading ? (
+      {activeView === 'fridge-raid' ? (
+        <div className="px-4 py-4">
+          <FridgeRaid />
+        </div>
+      ) : loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
@@ -136,11 +234,8 @@ export default function ShoppingList() {
 
           {activeList ? (
             <div className="px-4 py-4">
-              {/* Progress */}
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-muted-foreground">
-                  {checkedCount}/{totalCount} items checked
-                </p>
+                <p className="text-sm text-muted-foreground">{checkedCount}/{totalCount} items checked</p>
                 <Button variant="ghost" size="sm" className="text-destructive text-xs" onClick={() => deleteList(activeList.id)}>
                   <Trash2 className="h-3 w-3 mr-1" /> Delete list
                 </Button>
@@ -152,7 +247,6 @@ export default function ShoppingList() {
                 </div>
               )}
 
-              {/* Add item */}
               <div className="flex gap-2 mb-4">
                 <Input
                   placeholder="Add an item..."
@@ -171,28 +265,62 @@ export default function ShoppingList() {
                 <AISuggestions onAddItem={(name, qty, cat) => addItem(name, qty, cat)} />
               </div>
 
-              {/* Items */}
-              <div className="space-y-1">
-                {activeList.items.filter(i => !i.checked).map((item, idx) => {
-                  const realIdx = activeList.items.indexOf(item);
+              {/* Items grouped by category */}
+              <div className="space-y-4">
+                {categories.map(cat => {
+                  const catItems = uncheckedItems.filter(i => i.category === cat);
                   return (
-                    <div key={idx} className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors group">
-                      <button onClick={() => toggleItem(realIdx)} className="h-5 w-5 rounded-full border-2 border-muted-foreground flex items-center justify-center shrink-0 hover:border-primary transition-colors" />
-                      <span className="text-sm text-foreground flex-1">{item.name}</span>
-                      <button onClick={() => removeItem(realIdx)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      </button>
+                    <div key={cat}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Package className="h-3 w-3 text-primary" />
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{cat}</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        {catItems.map((item) => {
+                          const realIdx = activeList.items.indexOf(item);
+                          return (
+                            <div key={realIdx} className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors group">
+                              <button onClick={() => toggleItem(realIdx)} className="h-5 w-5 rounded-full border-2 border-muted-foreground flex items-center justify-center shrink-0 hover:border-primary transition-colors" />
+                              <span className="text-sm text-foreground flex-1">{item.name}</span>
+                              <button onClick={() => removeItem(realIdx)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
 
-                {checkedCount > 0 && (
-                  <>
-                    <p className="text-xs text-muted-foreground pt-3 pb-1 font-medium">Completed</p>
-                    {activeList.items.filter(i => i.checked).map((item, idx) => {
+                {/* Uncategorized */}
+                {uncheckedItems.filter(i => !categories.includes(i.category)).length > 0 && (
+                  <div className="space-y-0.5">
+                    {uncheckedItems.filter(i => !categories.includes(i.category)).map((item) => {
                       const realIdx = activeList.items.indexOf(item);
                       return (
-                        <div key={idx} className="flex items-center gap-3 rounded-lg px-3 py-2 group opacity-50">
+                        <div key={realIdx} className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors group">
+                          <button onClick={() => toggleItem(realIdx)} className="h-5 w-5 rounded-full border-2 border-muted-foreground flex items-center justify-center shrink-0 hover:border-primary transition-colors" />
+                          <span className="text-sm text-foreground flex-1">{item.name}</span>
+                          <button onClick={() => removeItem(realIdx)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Pantry / Checked */}
+                {checkedCount > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground pt-3 pb-1 font-medium flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Pantry / Completed ({checkedCount})
+                    </p>
+                    {checkedItems.map((item) => {
+                      const realIdx = activeList.items.indexOf(item);
+                      return (
+                        <div key={realIdx} className="flex items-center gap-3 rounded-lg px-3 py-2 group opacity-50">
                           <button onClick={() => toggleItem(realIdx)} className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
                             <Check className="h-3 w-3 text-primary-foreground" />
                           </button>
@@ -203,7 +331,7 @@ export default function ShoppingList() {
                         </div>
                       );
                     })}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -211,7 +339,7 @@ export default function ShoppingList() {
             <div className="py-16 text-center">
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-lg font-display font-semibold text-foreground">No shopping lists</p>
-              <p className="text-sm text-muted-foreground mt-1">Create one to start tracking your groceries!</p>
+              <p className="text-sm text-muted-foreground mt-1">Create one or generate from your recipes!</p>
             </div>
           )}
         </div>
