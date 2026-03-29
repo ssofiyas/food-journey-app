@@ -98,32 +98,47 @@ export type Database = {
       }
       meal_plans: {
         Row: {
+          calories: number | null
+          carbs: number | null
           created_at: string
           custom_meal: string | null
           date: string
+          fat: number | null
           id: string
+          is_extra: boolean | null
           meal_type: string
           notes: string | null
+          protein: number | null
           recipe_id: string | null
           user_id: string
         }
         Insert: {
+          calories?: number | null
+          carbs?: number | null
           created_at?: string
           custom_meal?: string | null
           date: string
+          fat?: number | null
           id?: string
+          is_extra?: boolean | null
           meal_type?: string
           notes?: string | null
+          protein?: number | null
           recipe_id?: string | null
           user_id: string
         }
         Update: {
+          calories?: number | null
+          carbs?: number | null
           created_at?: string
           custom_meal?: string | null
           date?: string
+          fat?: number | null
           id?: string
+          is_extra?: boolean | null
           meal_type?: string
           notes?: string | null
+          protein?: number | null
           recipe_id?: string | null
           user_id?: string
         }
@@ -137,6 +152,33 @@ export type Database = {
           },
         ]
       }
+      pantry_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string
+          quantity: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          quantity?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          quantity?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           comments_count: number | null
@@ -144,8 +186,11 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_recipe: boolean | null
           likes_count: number | null
           recipe_id: string | null
+          recipe_ingredients: Json | null
+          recipe_instructions: Json | null
           updated_at: string
           user_id: string
         }
@@ -155,8 +200,11 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_recipe?: boolean | null
           likes_count?: number | null
           recipe_id?: string | null
+          recipe_ingredients?: Json | null
+          recipe_instructions?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -166,8 +214,11 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_recipe?: boolean | null
           likes_count?: number | null
           recipe_id?: string | null
+          recipe_ingredients?: Json | null
+          recipe_instructions?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -179,6 +230,7 @@ export type Database = {
           banner_url: string | null
           bio: string | null
           created_at: string
+          daily_calorie_target: number | null
           followers_count: number | null
           following_count: number | null
           full_name: string | null
@@ -194,6 +246,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string
+          daily_calorie_target?: number | null
           followers_count?: number | null
           following_count?: number | null
           full_name?: string | null
@@ -209,6 +262,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string
+          daily_calorie_target?: number | null
           followers_count?: number | null
           following_count?: number | null
           full_name?: string | null
