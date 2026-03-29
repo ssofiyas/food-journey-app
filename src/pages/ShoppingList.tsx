@@ -161,7 +161,7 @@ export default function ShoppingList() {
                   onKeyDown={e => e.key === 'Enter' && addItem()}
                   className="rounded-full"
                 />
-                <Button variant="hero" size="icon" className="rounded-full shrink-0" onClick={addItem} disabled={!newItemName.trim()}>
+                <Button variant="hero" size="icon" className="rounded-full shrink-0" onClick={() => addItem()} disabled={!newItemName.trim()}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
