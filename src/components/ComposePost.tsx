@@ -1,13 +1,22 @@
 import { useState, useRef } from 'react';
-import { ImagePlus, X, User } from 'lucide-react';
+import { ImagePlus, X, User, ChefHat, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface ComposePostProps {
   onPostCreated?: () => void;
+}
+
+interface Ingredient {
+  name: string;
+  amount: string;
+  unit: string;
 }
 
 export function ComposePost({ onPostCreated }: ComposePostProps) {
@@ -17,6 +26,9 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isRecipe, setIsRecipe] = useState(false);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: '' }]);
+  const [instructions, setInstructions] = useState<string[]>(['']);
   const fileRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
@@ -53,14 +65,23 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
         image_url = urlData.publicUrl;
       }
 
+      const recipeIngredients = isRecipe ? ingredients.filter(i => i.name.trim()) : [];
+      const recipeInstructions = isRecipe ? instructions.filter(i => i.trim()) : [];
+
       const { error } = await supabase.from('posts').insert({
         content: content.trim() || '📸',
         user_id: user.id,
         image_url,
+        is_recipe: isRecipe,
+        recipe_ingredients: recipeIngredients as any,
+        recipe_instructions: recipeInstructions as any,
       });
       if (error) throw error;
       setContent('');
       removeImage();
+      setIsRecipe(false);
+      setIngredients([{ name: '', amount: '', unit: '' }]);
+      setInstructions(['']);
       toast({ title: 'Posted!' });
       onPostCreated?.();
     } catch (err: any) {
@@ -90,6 +111,62 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
             <button onClick={removeImage} className="absolute top-2 right-2 rounded-full bg-background/80 p-1 hover:bg-background transition-colors">
               <X className="h-4 w-4 text-foreground" />
             </button>
+          </div>
+        )}
+
+        {/* Recipe Toggle */}
+        <div className="flex items-center gap-2 mt-3 py-2">
+          <Switch checked={isRecipe} onCheckedChange={setIsRecipe} id="recipe-toggle" />
+          <Label htmlFor="recipe-toggle" className="text-sm text-muted-foreground flex items-center gap-1.5 cursor-pointer">
+            <ChefHat className="h-4 w-4" /> This is a Recipe
+          </Label>
+        </div>
+
+        {isRecipe && (
+          <div className="space-y-3 p-3 rounded-xl bg-muted/50 border border-border mt-1">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Ingredients</p>
+              {ingredients.map((ing, i) => (
+                <div key={i} className="flex gap-1.5 mb-1.5">
+                  <Input placeholder="Amt" value={ing.amount} className="w-16 h-8 text-xs" onChange={e => {
+                    const u = [...ingredients]; u[i] = { ...ing, amount: e.target.value }; setIngredients(u);
+                  }} />
+                  <Input placeholder="Unit" value={ing.unit} className="w-16 h-8 text-xs" onChange={e => {
+                    const u = [...ingredients]; u[i] = { ...ing, unit: e.target.value }; setIngredients(u);
+                  }} />
+                  <Input placeholder="Ingredient" value={ing.name} className="flex-1 h-8 text-xs" onChange={e => {
+                    const u = [...ingredients]; u[i] = { ...ing, name: e.target.value }; setIngredients(u);
+                  }} />
+                  {ingredients.length > 1 && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setIngredients(ingredients.filter((_, j) => j !== i))}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" className="text-xs h-7 text-primary" onClick={() => setIngredients([...ingredients, { name: '', amount: '', unit: '' }])}>
+                + Add
+              </Button>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Steps</p>
+              {instructions.map((step, i) => (
+                <div key={i} className="flex gap-1.5 mb-1.5 items-start">
+                  <span className="text-xs text-muted-foreground mt-2 w-4 shrink-0">{i + 1}.</span>
+                  <Textarea placeholder={`Step ${i + 1}`} value={step} className="min-h-[40px] text-xs" onChange={e => {
+                    const u = [...instructions]; u[i] = e.target.value; setInstructions(u);
+                  }} />
+                  {instructions.length > 1 && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setInstructions(instructions.filter((_, j) => j !== i))}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" className="text-xs h-7 text-primary" onClick={() => setInstructions([...instructions, ''])}>
+                + Add step
+              </Button>
+            </div>
           </div>
         )}
 

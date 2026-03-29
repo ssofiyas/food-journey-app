@@ -1,6 +1,14 @@
-import { Heart, MessageCircle, Share2, MoreHorizontal, User } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, User, ChefHat, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+
+interface Ingredient {
+  name: string;
+  amount: string;
+  unit: string;
+}
 
 interface PostCardProps {
   post: {
@@ -11,6 +19,9 @@ interface PostCardProps {
     comments_count: number;
     created_at: string;
     user_id: string;
+    is_recipe?: boolean;
+    recipe_ingredients?: Ingredient[];
+    recipe_instructions?: string[];
   };
   author?: {
     full_name: string | null;
@@ -23,13 +34,17 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, author, liked, onLike, onComment }: PostCardProps) {
+  const [showRecipe, setShowRecipe] = useState(false);
   const displayName = author?.full_name || 'Anonymous';
   const handle = author?.username ? `@${author.username}` : '@user';
   const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
 
+  const hasRecipeData = post.is_recipe &&
+    ((post.recipe_ingredients && post.recipe_ingredients.length > 0) ||
+     (post.recipe_instructions && post.recipe_instructions.length > 0));
+
   return (
     <article className="flex gap-3 border-b border-border px-4 py-4 transition-colors hover:bg-muted/30 cursor-pointer">
-      {/* Avatar */}
       <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
         {author?.avatar_url ? (
           <img src={author.avatar_url} alt={displayName} className="h-10 w-10 rounded-full object-cover" />
@@ -38,13 +53,17 @@ export function PostCard({ post, author, liked, onLike, onComment }: PostCardPro
         )}
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm text-foreground truncate">{displayName}</span>
           <span className="text-sm text-muted-foreground truncate">{handle}</span>
           <span className="text-muted-foreground">·</span>
           <span className="text-sm text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+          {post.is_recipe && (
+            <Badge variant="secondary" className="text-[10px] gap-1 shrink-0">
+              <ChefHat className="h-3 w-3" /> Recipe
+            </Badge>
+          )}
           <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 shrink-0">
             <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -55,6 +74,49 @@ export function PostCard({ post, author, liked, onLike, onComment }: PostCardPro
         {post.image_url && (
           <div className="mt-3 overflow-hidden rounded-2xl border border-border">
             <img src={post.image_url} alt="" className="w-full object-cover max-h-96" />
+          </div>
+        )}
+
+        {/* Recipe Quick View */}
+        {hasRecipeData && (
+          <div className="mt-3">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowRecipe(!showRecipe); }}
+              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+            >
+              {showRecipe ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              {showRecipe ? 'Hide recipe' : 'View recipe'}
+            </button>
+
+            {showRecipe && (
+              <div className="mt-2 p-3 rounded-xl bg-muted/50 border border-border space-y-3">
+                {post.recipe_ingredients && post.recipe_ingredients.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Ingredients</p>
+                    <ul className="space-y-0.5">
+                      {post.recipe_ingredients.map((ing, i) => (
+                        <li key={i} className="text-xs text-foreground">
+                          <span className="text-primary font-medium">{ing.amount} {ing.unit}</span> {ing.name}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {post.recipe_instructions && post.recipe_instructions.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Steps</p>
+                    <ol className="space-y-1">
+                      {post.recipe_instructions.map((step, i) => (
+                        <li key={i} className="text-xs text-foreground flex gap-2">
+                          <span className="text-primary font-semibold shrink-0">{i + 1}.</span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
