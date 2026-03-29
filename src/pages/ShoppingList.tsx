@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { AISuggestions } from '@/components/AISuggestions';
 
 interface ShoppingItem {
   name: string;
@@ -64,11 +65,12 @@ export default function ShoppingList() {
     setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items } : l));
   };
 
-  const addItem = () => {
-    if (!newItemName.trim() || !activeList) return;
-    const newItem: ShoppingItem = { name: newItemName.trim(), quantity: '1', checked: false, category: 'General' };
+  const addItem = (name?: string, quantity?: string, category?: string) => {
+    const itemName = name || newItemName.trim();
+    if (!itemName || !activeList) return;
+    const newItem: ShoppingItem = { name: itemName, quantity: quantity || '1', checked: false, category: category || 'General' };
     updateItems([...activeList.items, newItem]);
-    setNewItemName('');
+    if (!name) setNewItemName('');
   };
 
   const toggleItem = (index: number) => {
@@ -159,9 +161,14 @@ export default function ShoppingList() {
                   onKeyDown={e => e.key === 'Enter' && addItem()}
                   className="rounded-full"
                 />
-                <Button variant="hero" size="icon" className="rounded-full shrink-0" onClick={addItem} disabled={!newItemName.trim()}>
+                <Button variant="hero" size="icon" className="rounded-full shrink-0" onClick={() => addItem()} disabled={!newItemName.trim()}>
                   <Plus className="h-4 w-4" />
                 </Button>
+              </div>
+
+              {/* AI Suggestions */}
+              <div className="mb-4">
+                <AISuggestions onAddItem={(name, qty, cat) => addItem(name, qty, cat)} />
               </div>
 
               {/* Items */}
