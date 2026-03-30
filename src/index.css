@@ -59,6 +59,8 @@
     --shadow-card: 0 1px 3px 0 hsl(210 11% 15% / 0.04);
     --shadow-card-hover: 0 4px 12px -2px hsl(210 11% 15% / 0.08);
     --shadow-hero: 0 20px 60px -12px hsl(152 55% 40% / 0.2);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(210 14% 92% / 0.5);
   }
 
   .dark {
@@ -98,6 +100,8 @@
     --sidebar-accent-foreground: 210 10% 85%;
     --sidebar-border: 210 10% 18%;
     --sidebar-ring: 152 55% 48%;
+    --glass-bg: hsl(210 11% 7% / 0.7);
+    --glass-border: hsl(210 10% 18% / 0.5);
   }
 }
 

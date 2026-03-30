@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ComposePost } from '@/components/ComposePost';
 import { PostCard } from '@/components/PostCard';
+import { useToast } from '@/hooks/use-toast';
 
 interface Post {
   id: string;
@@ -28,14 +29,15 @@ type FeedTab = 'global' | 'following';
 
 export default function Feed() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FeedTab>('global');
   const [followingIds, setFollowingIds] = useState<string[]>([]);
 
-  // Fetch who user follows
   useEffect(() => {
     if (!user) return;
     supabase.from('follows').select('following_id').eq('follower_id', user.id).then(({ data }) => {
@@ -45,11 +47,9 @@ export default function Feed() {
 
   const fetchPosts = useCallback(async () => {
     let query = supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(50);
-
     if (activeTab === 'following' && followingIds.length > 0) {
       query = query.in('user_id', [...followingIds, user?.id || '']);
     }
-
     const { data } = await query;
     if (data) {
       setPosts(data as Post[]);
@@ -75,7 +75,13 @@ export default function Feed() {
     if (data) setLikedPosts(new Set(data.map((l: any) => l.post_id)));
   }, [user]);
 
-  useEffect(() => { fetchPosts(); fetchLikes(); }, [fetchPosts, fetchLikes]);
+  const fetchSaved = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from('saved_posts').select('post_id').eq('user_id', user.id);
+    if (data) setSavedPosts(new Set(data.map((s: any) => s.post_id)));
+  }, [user]);
+
+  useEffect(() => { fetchPosts(); fetchLikes(); fetchSaved(); }, [fetchPosts, fetchLikes, fetchSaved]);
 
   useEffect(() => {
     const channel = supabase
@@ -99,10 +105,29 @@ export default function Feed() {
     }
   };
 
+  const handleSave = async (postId: string) => {
+    if (!user) return;
+    const isSaved = savedPosts.has(postId);
+    if (isSaved) {
+      await supabase.from('saved_posts').delete().eq('user_id', user.id).eq('post_id', postId);
+      setSavedPosts((prev) => { const n = new Set(prev); n.delete(postId); return n; });
+    } else {
+      await supabase.from('saved_posts').insert({ user_id: user.id, post_id: postId });
+      setSavedPosts((prev) => new Set(prev).add(postId));
+      toast({ title: 'Saved!' });
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    await supabase.from('posts').delete().eq('id', postId);
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    toast({ title: 'Post deleted' });
+  };
+
   return (
-    <div className="flex-1 border-r border-border max-w-2xl">
+    <div className="flex-1 border-r border-border max-w-2xl pb-16 md:pb-0">
       {/* Header with tabs */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl">
         <h1 className="font-display text-xl font-bold text-foreground px-4 pt-3 pb-2">Home</h1>
         <div className="flex">
           {(['global', 'following'] as const).map(tab => (
@@ -143,7 +168,10 @@ export default function Feed() {
             post={post}
             author={profiles[post.user_id]}
             liked={likedPosts.has(post.id)}
+            saved={savedPosts.has(post.id)}
             onLike={() => handleLike(post.id)}
+            onSave={() => handleSave(post.id)}
+            onDelete={() => handleDelete(post.id)}
           />
         ))
       )}
