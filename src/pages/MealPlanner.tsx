@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Utensils, Sparkles, Loader2 } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Plus, X, Utensils, Sparkles, Loader2, Bookmark } from 'lucide-react';
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isToday } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +25,13 @@ interface MealPlan {
   is_extra: boolean;
 }
 
+interface SavedRecipe {
+  id: string;
+  content: string;
+  image_url: string | null;
+  recipe_ingredients: any[];
+}
+
 const mealSlots = ['breakfast', 'lunch', 'dinner'];
 
 export default function MealPlanner() {
@@ -41,6 +48,8 @@ export default function MealPlanner() {
   const [saving, setSaving] = useState(false);
   const [estimating, setEstimating] = useState(false);
   const [dailyTarget, setDailyTarget] = useState(2000);
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
+  const [showSavedSuggestions, setShowSavedSuggestions] = useState(false);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -50,6 +59,20 @@ export default function MealPlanner() {
     supabase.from('profiles').select('daily_calorie_target').eq('user_id', user.id).single().then(({ data }) => {
       if (data && (data as any).daily_calorie_target) setDailyTarget((data as any).daily_calorie_target);
     });
+  }, [user]);
+
+  const fetchSavedRecipes = useCallback(async () => {
+    if (!user) return;
+    const { data: savedData } = await supabase.from('saved_posts').select('post_id').eq('user_id', user.id);
+    if (savedData && savedData.length > 0) {
+      const postIds = savedData.map((s: any) => s.post_id);
+      const { data: postData } = await supabase
+        .from('posts')
+        .select('id, content, image_url, recipe_ingredients')
+        .in('id', postIds)
+        .eq('is_recipe', true);
+      if (postData) setSavedRecipes(postData as SavedRecipe[]);
+    }
   }, [user]);
 
   const fetchPlans = async () => {
@@ -64,7 +87,7 @@ export default function MealPlanner() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchPlans(); }, [user, currentDate]);
+  useEffect(() => { fetchPlans(); fetchSavedRecipes(); }, [user, currentDate]);
 
   const getMealsForDay = (date: Date) => plans.filter(p => p.date === format(date, 'yyyy-MM-dd'));
   const getDayCalories = (date: Date) => getMealsForDay(date).reduce((sum, m) => sum + (m.calories || 0), 0);
@@ -104,12 +127,16 @@ export default function MealPlanner() {
       setDialogOpen(false);
       setMealName('');
       setIsExtra(false);
+      setShowSavedSuggestions(false);
       fetchPlans();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
+  };
+
+  const handleAddSavedRecipe = (recipe: SavedRecipe) => {
+    setMealName(recipe.content.slice(0, 100));
+    setShowSavedSuggestions(false);
   };
 
   const handleDeleteMeal = async (id: string) => {
@@ -136,9 +163,7 @@ export default function MealPlanner() {
       fetchPlans();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const openAddDialog = (date: Date, slot: string, extra = false) => {
@@ -146,23 +171,24 @@ export default function MealPlanner() {
     setSelectedSlot(slot);
     setIsExtra(extra);
     setMealName('');
+    setShowSavedSuggestions(false);
     setDialogOpen(true);
   };
 
-  const navigate = (dir: number) => {
+  const nav = (dir: number) => {
     setCurrentDate(prev => dir > 0 ? addWeeks(prev, 1) : subWeeks(prev, 1));
   };
 
   return (
-    <div className="flex-1 border-r border-border max-w-2xl">
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-4 py-3">
+    <div className="flex-1 border-r border-border max-w-2xl pb-16 md:pb-0">
+      <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl px-4 py-3">
         <h1 className="font-display text-xl font-bold text-foreground">Meal Planner</h1>
         <div className="flex items-center justify-between mt-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => nav(-1)}><ChevronLeft className="h-4 w-4" /></Button>
           <span className="font-display font-semibold text-foreground">
             {format(weekDays[0], 'MMM d')} – {format(weekDays[6], 'MMM d, yyyy')}
           </span>
-          <Button variant="ghost" size="icon" onClick={() => navigate(1)}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => nav(1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
       </div>
 
@@ -189,17 +215,12 @@ export default function MealPlanner() {
                     </span>
                     <span className="text-xs text-muted-foreground">{format(day, 'MMM d')}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {dayCalories} / {dailyTarget} kcal
-                  </span>
+                  <span className="text-xs text-muted-foreground">{dayCalories} / {dailyTarget} kcal</span>
                 </div>
 
-                {/* Calorie progress bar */}
                 <div className="h-1.5 rounded-full bg-muted mb-3 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${
-                      caloriePercent > 100 ? 'bg-destructive' : caloriePercent > 80 ? 'bg-accent' : 'bg-primary'
-                    }`}
+                    className={`h-full rounded-full transition-all ${caloriePercent > 100 ? 'bg-destructive' : caloriePercent > 80 ? 'bg-accent' : 'bg-primary'}`}
                     style={{ width: `${caloriePercent}%` }}
                   />
                 </div>
@@ -211,7 +232,7 @@ export default function MealPlanner() {
                       <div key={slot} className="min-h-[48px]">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{slot}</p>
                         {meal ? (
-                          <div className="rounded-lg bg-muted px-2 py-1.5 group">
+                          <div className="rounded-2xl bg-card/60 backdrop-blur-sm border border-border px-2 py-1.5 group">
                             <div className="flex items-center gap-1">
                               <Utensils className="h-3 w-3 text-primary shrink-0" />
                               <span className="text-xs text-foreground truncate flex-1">{meal.custom_meal || 'Recipe'}</span>
@@ -226,7 +247,7 @@ export default function MealPlanner() {
                         ) : (
                           <button
                             onClick={() => openAddDialog(day, slot)}
-                            className="w-full rounded-lg border border-dashed border-border px-2 py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                            className="w-full rounded-2xl border border-dashed border-border px-2 py-1.5 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                           >
                             <Plus className="h-3 w-3 mx-auto" />
                           </button>
@@ -236,11 +257,10 @@ export default function MealPlanner() {
                   })}
                 </div>
 
-                {/* Extra meals */}
                 {extraMeals.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {extraMeals.map(meal => (
-                      <div key={meal.id} className="flex items-center gap-2 rounded-lg bg-accent/10 px-2 py-1.5 group">
+                      <div key={meal.id} className="flex items-center gap-2 rounded-2xl bg-accent/10 px-2 py-1.5 group">
                         <span className="text-[10px] text-accent font-medium">+</span>
                         <span className="text-xs text-foreground truncate flex-1">{meal.custom_meal}</span>
                         {meal.calories > 0 && <span className="text-[10px] text-muted-foreground">{meal.calories} kcal</span>}
@@ -252,7 +272,6 @@ export default function MealPlanner() {
                   </div>
                 )}
 
-                {/* Add Other button */}
                 <button
                   onClick={() => openAddDialog(day, 'other', true)}
                   className="mt-2 flex items-center gap-1 text-[10px] text-accent hover:text-accent/80 transition-colors"
@@ -265,7 +284,7 @@ export default function MealPlanner() {
         </div>
       )}
 
-      {/* Add Meal Dialog */}
+      {/* Add Meal Dialog with Saved Suggestions */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -283,6 +302,39 @@ export default function MealPlanner() {
               </Select>
             )}
             <Input placeholder={isExtra ? "Snack, drink, treat..." : "What are you eating?"} value={mealName} onChange={e => setMealName(e.target.value)} />
+
+            {/* Saved recipes quick add */}
+            {savedRecipes.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowSavedSuggestions(!showSavedSuggestions)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  <Bookmark className="h-3 w-3" />
+                  {showSavedSuggestions ? 'Hide saved recipes' : 'Choose from saved recipes'}
+                </button>
+                {showSavedSuggestions && (
+                  <div className="mt-2 max-h-40 overflow-y-auto space-y-1 rounded-2xl border border-border p-2">
+                    {savedRecipes.map(recipe => (
+                      <button
+                        key={recipe.id}
+                        onClick={() => handleAddSavedRecipe(recipe)}
+                        className="w-full text-left flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-muted/50 transition-colors"
+                      >
+                        {recipe.image_url ? (
+                          <img src={recipe.image_url} alt="" className="h-8 w-8 rounded-lg object-cover shrink-0" />
+                        ) : (
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Utensils className="h-3 w-3 text-primary" />
+                          </div>
+                        )}
+                        <span className="text-xs text-foreground truncate">{recipe.content.slice(0, 60)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Sparkles className="h-3 w-3 text-primary" />
