@@ -158,6 +158,34 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
             </Label>
           </div>
 
+          {/* Tags */}
+          <div className="mt-2">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {tags.map(tag => (
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium">
+                  #{tag}
+                  <button onClick={() => setTags(tags.filter(t => t !== tag))}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                placeholder="#lisää tagi"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value.replace(/[^a-zäöåA-ZÄÖÅ0-9]/g, ''))}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && tagInput.trim()) {
+                    e.preventDefault();
+                    const t = tagInput.trim().toLowerCase();
+                    if (!tags.includes(t)) setTags([...tags, t]);
+                    setTagInput('');
+                  }
+                }}
+                className="h-6 bg-transparent border-0 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-24"
+              />
+            </div>
+          </div>
+
           {isRecipe && (
             <div className="space-y-3 p-3 rounded-2xl bg-muted/50 border border-border mt-3 animate-fade-in">
               <div>
