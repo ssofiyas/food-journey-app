@@ -71,6 +71,10 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
       const recipeIngredients = isRecipe ? ingredients.filter(i => i.name.trim()) : [];
       const recipeInstructions = isRecipe ? instructions.filter(i => i.trim()) : [];
 
+      // Extract hashtags from content + manual tags
+      const hashtagsFromContent = (content.match(/#(\w+)/g) || []).map(t => t.slice(1).toLowerCase());
+      const allTags = [...new Set([...tags, ...hashtagsFromContent])];
+
       const { error } = await supabase.from('posts').insert({
         content: content.trim() || '📸',
         user_id: user.id,
@@ -78,6 +82,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
         is_recipe: isRecipe,
         recipe_ingredients: recipeIngredients as any,
         recipe_instructions: recipeInstructions as any,
+        tags: allTags as any,
       });
       if (error) throw error;
       setContent('');
