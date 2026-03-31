@@ -90,6 +90,8 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
       setIsRecipe(false);
       setIngredients([{ name: '', amount: '', unit: '' }]);
       setInstructions(['']);
+      setTags([]);
+      setTagInput('');
       setExpanded(false);
       toast({ title: 'Julkaistu!' });
       onPostCreated?.();
