@@ -29,6 +29,8 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
   const [isRecipe, setIsRecipe] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: '' }]);
   const [instructions, setInstructions] = useState<string[]>(['']);
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -69,6 +71,10 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
       const recipeIngredients = isRecipe ? ingredients.filter(i => i.name.trim()) : [];
       const recipeInstructions = isRecipe ? instructions.filter(i => i.trim()) : [];
 
+      // Extract hashtags from content + manual tags
+      const hashtagsFromContent = (content.match(/#(\w+)/g) || []).map(t => t.slice(1).toLowerCase());
+      const allTags = [...new Set([...tags, ...hashtagsFromContent])];
+
       const { error } = await supabase.from('posts').insert({
         content: content.trim() || '📸',
         user_id: user.id,
@@ -76,6 +82,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
         is_recipe: isRecipe,
         recipe_ingredients: recipeIngredients as any,
         recipe_instructions: recipeInstructions as any,
+        tags: allTags as any,
       });
       if (error) throw error;
       setContent('');
@@ -83,6 +90,8 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
       setIsRecipe(false);
       setIngredients([{ name: '', amount: '', unit: '' }]);
       setInstructions(['']);
+      setTags([]);
+      setTagInput('');
       setExpanded(false);
       toast({ title: 'Julkaistu!' });
       onPostCreated?.();
@@ -147,6 +156,34 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
             <Label htmlFor="recipe-toggle" className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer">
               <ChefHat className="h-3.5 w-3.5" /> Tämä on resepti
             </Label>
+          </div>
+
+          {/* Tags */}
+          <div className="mt-2">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {tags.map(tag => (
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium">
+                  #{tag}
+                  <button onClick={() => setTags(tags.filter(t => t !== tag))}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                placeholder="#lisää tagi"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value.replace(/[^a-zäöåA-ZÄÖÅ0-9]/g, ''))}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && tagInput.trim()) {
+                    e.preventDefault();
+                    const t = tagInput.trim().toLowerCase();
+                    if (!tags.includes(t)) setTags([...tags, t]);
+                    setTagInput('');
+                  }
+                }}
+                className="h-6 bg-transparent border-0 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-24"
+              />
+            </div>
           </div>
 
           {isRecipe && (

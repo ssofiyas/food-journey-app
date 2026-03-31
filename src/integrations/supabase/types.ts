@@ -191,6 +191,7 @@ export type Database = {
           recipe_id: string | null
           recipe_ingredients: Json | null
           recipe_instructions: Json | null
+          tags: string[] | null
           updated_at: string
           user_id: string
         }
@@ -205,6 +206,7 @@ export type Database = {
           recipe_id?: string | null
           recipe_ingredients?: Json | null
           recipe_instructions?: Json | null
+          tags?: string[] | null
           updated_at?: string
           user_id: string
         }
@@ -219,6 +221,7 @@ export type Database = {
           recipe_id?: string | null
           recipe_ingredients?: Json | null
           recipe_instructions?: Json | null
+          tags?: string[] | null
           updated_at?: string
           user_id?: string
         }
@@ -380,6 +383,27 @@ export type Database = {
           id?: string
           items?: Json
           name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          id: string
+          liked_tags: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          liked_tags?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          liked_tags?: Json
           updated_at?: string
           user_id?: string
         }
