@@ -29,6 +29,8 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
   const [isRecipe, setIsRecipe] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: '' }]);
   const [instructions, setInstructions] = useState<string[]>(['']);
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
