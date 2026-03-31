@@ -17,6 +17,7 @@ interface Post {
   is_recipe: boolean;
   recipe_ingredients: any[];
   recipe_instructions: string[];
+  tags: string[];
 }
 
 interface Profile {
@@ -38,13 +39,28 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FeedTab>('global');
   const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [userPreferences, setUserPreferences] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user) return;
+    // Fetch following IDs and user preferences in parallel
     supabase.from('follows').select('following_id').eq('follower_id', user.id).then(({ data }) => {
       if (data) setFollowingIds(data.map((f: any) => f.following_id));
     });
+    supabase.from('user_preferences').select('liked_tags').eq('user_id', user.id).single().then(({ data }) => {
+      if (data) setUserPreferences((data as any).liked_tags || {});
+    });
   }, [user]);
+
+  // Score a post based on user's tag preferences
+  const scorePost = useCallback((post: Post): number => {
+    if (!post.tags || post.tags.length === 0 || Object.keys(userPreferences).length === 0) return 0;
+    let score = 0;
+    for (const tag of post.tags) {
+      score += userPreferences[tag] || 0;
+    }
+    return score;
+  }, [userPreferences]);
 
   const fetchPosts = useCallback(async () => {
     let query = supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(50);
@@ -53,7 +69,20 @@ export default function Feed() {
     }
     const { data } = await query;
     if (data) {
-      setPosts(data as Post[]);
+      let sortedPosts = data as Post[];
+      
+      // For "global" tab, apply recommendation scoring
+      if (activeTab === 'global' && Object.keys(userPreferences).length > 0) {
+        sortedPosts = [...sortedPosts].sort((a, b) => {
+          const scoreA = scorePost(a);
+          const scoreB = scorePost(b);
+          if (scoreA !== scoreB) return scoreB - scoreA;
+          // Fall back to recency
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+      }
+      
+      setPosts(sortedPosts);
       const userIds = [...new Set(data.map((p: any) => p.user_id))];
       if (userIds.length > 0) {
         const { data: profileData } = await supabase
@@ -68,7 +97,7 @@ export default function Feed() {
       }
     }
     setLoading(false);
-  }, [activeTab, followingIds, user]);
+  }, [activeTab, followingIds, user, scorePost, userPreferences]);
 
   const fetchLikes = useCallback(async () => {
     if (!user) return;
