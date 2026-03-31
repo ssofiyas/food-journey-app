@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ComposePost } from '@/components/ComposePost';
 import { PostCard } from '@/components/PostCard';
 import { useToast } from '@/hooks/use-toast';
+import { Sparkles } from 'lucide-react';
 
 interface Post {
   id: string;
@@ -114,33 +115,39 @@ export default function Feed() {
     } else {
       await supabase.from('saved_posts').insert({ user_id: user.id, post_id: postId });
       setSavedPosts((prev) => new Set(prev).add(postId));
-      toast({ title: 'Saved!' });
+      toast({ title: 'Tallennettu!' });
     }
   };
 
   const handleDelete = async (postId: string) => {
     await supabase.from('posts').delete().eq('id', postId);
     setPosts((prev) => prev.filter((p) => p.id !== postId));
-    toast({ title: 'Post deleted' });
+    toast({ title: 'Julkaisu poistettu' });
   };
 
   return (
-    <div className="flex-1 border-r border-border max-w-2xl pb-16 md:pb-0">
-      {/* Header with tabs */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl">
-        <h1 className="font-display text-xl font-bold text-foreground px-4 pt-3 pb-2">Home</h1>
+    <div className="flex-1 max-w-2xl mx-auto pb-16 md:pb-0">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <h1 className="font-display text-xl font-bold text-foreground">MealCraft</h1>
+          <Sparkles className="h-5 w-5 text-primary" />
+        </div>
         <div className="flex">
           {(['global', 'following'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2.5 text-sm font-semibold capitalize transition-colors ${
+              className={`flex-1 py-2.5 text-sm font-semibold transition-all relative ${
                 activeTab === tab
-                  ? 'text-foreground border-b-2 border-primary'
-                  : 'text-muted-foreground hover:bg-muted/50'
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground/70'
               }`}
             >
-              {tab === 'global' ? 'For You' : 'Following'}
+              {tab === 'global' ? 'Sinulle' : 'Seuratut'}
+              {activeTab === tab && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-primary rounded-full" />
+              )}
             </button>
           ))}
         </div>
@@ -149,31 +156,36 @@ export default function Feed() {
       {user && <ComposePost onPostCreated={fetchPosts} />}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="py-16 text-center">
+        <div className="py-20 text-center px-8">
+          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="h-7 w-7 text-muted-foreground" />
+          </div>
           <p className="text-lg font-display font-semibold text-foreground">
-            {activeTab === 'following' ? 'Follow some people to see their posts!' : 'No posts yet'}
+            {activeTab === 'following' ? 'Seuraa käyttäjiä!' : 'Ei julkaisuja vielä'}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeTab === 'following' ? 'Switch to For You to discover content' : 'Be the first to share something!'}
+            {activeTab === 'following' ? 'Vaihda "Sinulle" löytääksesi sisältöä' : 'Ole ensimmäinen ja jaa jotain!'}
           </p>
         </div>
       ) : (
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            author={profiles[post.user_id]}
-            liked={likedPosts.has(post.id)}
-            saved={savedPosts.has(post.id)}
-            onLike={() => handleLike(post.id)}
-            onSave={() => handleSave(post.id)}
-            onDelete={() => handleDelete(post.id)}
-          />
-        ))
+        <div>
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              author={profiles[post.user_id]}
+              liked={likedPosts.has(post.id)}
+              saved={savedPosts.has(post.id)}
+              onLike={() => handleLike(post.id)}
+              onSave={() => handleSave(post.id)}
+              onDelete={() => handleDelete(post.id)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

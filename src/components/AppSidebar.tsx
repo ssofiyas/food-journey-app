@@ -1,8 +1,8 @@
 import { Home, Search, Bell, Mail, User, ChefHat, CalendarDays, ListChecks, Settings, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -16,17 +16,17 @@ import {
 } from '@/components/ui/sidebar';
 
 const mainNav = [
-  { title: 'Home', url: '/feed', icon: Home },
-  { title: 'Explore', url: '/explore', icon: Search },
-  { title: 'Notifications', url: '/notifications', icon: Bell },
-  { title: 'Messages', url: '/messages', icon: Mail },
-  { title: 'Profile', url: '/profile', icon: User },
+  { title: 'Koti', url: '/feed', icon: Home },
+  { title: 'Haku', url: '/explore', icon: Search },
+  { title: 'Ilmoitukset', url: '/notifications', icon: Bell },
+  { title: 'Viestit', url: '/messages', icon: Mail },
+  { title: 'Profiili', url: '/profile', icon: User },
 ];
 
 const toolsNav = [
-  { title: 'Recipes', url: '/recipes', icon: ChefHat },
-  { title: 'Meal Planner', url: '/planner', icon: CalendarDays },
-  { title: 'Shopping List', url: '/shopping', icon: ListChecks },
+  { title: 'Reseptit', url: '/recipes', icon: ChefHat },
+  { title: 'Ruokasuunnitelma', url: '/planner', icon: CalendarDays },
+  { title: 'Ostoslista', url: '/shopping', icon: ListChecks },
 ];
 
 export function AppSidebar() {
@@ -44,8 +44,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarContent className="pt-4">
         {/* Logo */}
-        <div className={`flex items-center gap-2 px-4 pb-4 ${collapsed ? 'justify-center' : ''}`}>
-          <ChefHat className="h-8 w-8 text-primary shrink-0" />
+        <div className={`flex items-center gap-2.5 px-4 pb-6 ${collapsed ? 'justify-center' : ''}`}>
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
+            <ChefHat className="h-5 w-5 text-primary-foreground" />
+          </div>
           {!collapsed && <span className="font-display text-xl font-bold text-foreground">MealCraft</span>}
         </div>
 
@@ -59,10 +61,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className="flex items-center gap-4 rounded-full px-4 py-3 text-lg font-body text-foreground transition-colors hover:bg-muted"
-                      activeClassName="font-semibold text-primary"
+                      className="flex items-center gap-4 rounded-xl px-4 py-3 text-base font-body text-foreground transition-all hover:bg-muted"
+                      activeClassName="font-semibold bg-muted"
                     >
-                      <item.icon className="h-6 w-6 shrink-0" />
+                      <item.icon className="h-6 w-6 shrink-0" strokeWidth={1.5} />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -76,7 +78,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             {!collapsed && (
-              <p className="px-4 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Tools</p>
+              <p className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Työkalut</p>
             )}
             <SidebarMenu>
               {toolsNav.map((item) => (
@@ -85,10 +87,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className="flex items-center gap-4 rounded-full px-4 py-3 font-body text-foreground transition-colors hover:bg-muted"
-                      activeClassName="font-semibold text-primary"
+                      className="flex items-center gap-4 rounded-xl px-4 py-3 font-body text-foreground transition-all hover:bg-muted"
+                      activeClassName="font-semibold bg-muted"
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
+                      <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -97,25 +99,26 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
       </SidebarContent>
 
       <SidebarFooter className="p-3">
         {user && (
-          <div className={`flex items-center gap-3 rounded-full p-2 transition-colors hover:bg-muted cursor-pointer ${collapsed ? 'justify-center' : ''}`}>
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <User className="h-5 w-5 text-primary" />
+          <div className={`flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted cursor-pointer ${collapsed ? 'justify-center' : ''}`}>
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent p-[2px] shrink-0">
+              <div className="h-full w-full rounded-full bg-card flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {user.user_metadata?.full_name || 'User'}
+                  {user.user_metadata?.full_name || 'Käyttäjä'}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
               </div>
             )}
             {!collapsed && (
-              <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0">
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0 h-8 w-8">
                 <LogOut className="h-4 w-4" />
               </Button>
             )}
