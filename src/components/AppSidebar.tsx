@@ -1,4 +1,4 @@
-import { Home, Search, Bell, Mail, User, ChefHat, CalendarDays, ListChecks, Settings, LogOut } from 'lucide-react';
+import { Home, Search, User, ChefHat, CalendarDays, ListChecks, Settings, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,17 +16,15 @@ import {
 } from '@/components/ui/sidebar';
 
 const mainNav = [
-  { title: 'Koti', url: '/feed', icon: Home },
-  { title: 'Haku', url: '/explore', icon: Search },
-  { title: 'Ilmoitukset', url: '/notifications', icon: Bell },
-  { title: 'Viestit', url: '/messages', icon: Mail },
-  { title: 'Profiili', url: '/profile', icon: User },
+  { title: 'Home', url: '/feed', icon: Home },
+  { title: 'Explore', url: '/explore', icon: Search },
+  { title: 'Profile', url: '/profile', icon: User },
 ];
 
 const toolsNav = [
-  { title: 'Reseptit', url: '/recipes', icon: ChefHat },
-  { title: 'Ruokasuunnitelma', url: '/planner', icon: CalendarDays },
-  { title: 'Ostoslista', url: '/shopping', icon: ListChecks },
+  { title: 'Recipes', url: '/recipes', icon: ChefHat },
+  { title: 'Meal Planner', url: '/planner', icon: CalendarDays },
+  { title: 'Shopping List', url: '/shopping', icon: ListChecks },
 ];
 
 export function AppSidebar() {
@@ -43,7 +41,6 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarContent className="pt-4">
-        {/* Logo */}
         <div className={`flex items-center gap-2.5 px-4 pb-6 ${collapsed ? 'justify-center' : ''}`}>
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
             <ChefHat className="h-5 w-5 text-primary-foreground" />
@@ -51,7 +48,6 @@ export function AppSidebar() {
           {!collapsed && <span className="font-display text-xl font-bold text-foreground">MealCraft</span>}
         </div>
 
-        {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -74,11 +70,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Tools */}
         <SidebarGroup>
           <SidebarGroupContent>
             {!collapsed && (
-              <p className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Työkalut</p>
+              <p className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tools</p>
             )}
             <SidebarMenu>
               {toolsNav.map((item) => (
@@ -112,7 +107,7 @@ export function AppSidebar() {
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {user.user_metadata?.full_name || 'Käyttäjä'}
+                  {user.user_metadata?.full_name || 'User'}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
               </div>

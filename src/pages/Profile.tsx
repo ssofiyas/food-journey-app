@@ -47,69 +47,42 @@ export default function Profile() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'tallennetut'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'saved'>('posts');
 
   const profileId = userId || user?.id;
   const isOwnProfile = profileId === user?.id;
 
   const fetchSaved = useCallback(async () => {
     if (!user || !isOwnProfile) return;
-    const { data: savedData } = await supabase
-      .from('saved_posts')
-      .select('post_id')
-      .eq('user_id', user.id);
+    const { data: savedData } = await supabase.from('saved_posts').select('post_id').eq('user_id', user.id);
     if (savedData && savedData.length > 0) {
       const postIds = savedData.map((s: any) => s.post_id);
       setSavedPostIds(new Set(postIds));
-      const { data: postData } = await supabase
-        .from('posts')
-        .select('*')
-        .in('id', postIds)
-        .order('created_at', { ascending: false });
+      const { data: postData } = await supabase.from('posts').select('*').in('id', postIds).order('created_at', { ascending: false });
       if (postData) setSavedPosts(postData as Post[]);
     }
   }, [user, isOwnProfile]);
 
   useEffect(() => {
     if (!profileId) return;
-
     const fetchProfile = async () => {
       const { data } = await supabase.from('profiles').select('*').eq('user_id', profileId).single();
       if (data) setProfile(data as any);
-
       const { data: postData } = await supabase.from('posts').select('*').eq('user_id', profileId).order('created_at', { ascending: false });
       if (postData) setPosts(postData as Post[]);
-
       if (user) {
         const { data: likeData } = await supabase.from('likes').select('post_id').eq('user_id', user.id);
         if (likeData) setLikedPosts(new Set(likeData.map((l: any) => l.post_id)));
       }
-
       if (user && !isOwnProfile) {
         const { data: followData } = await supabase.from('follows').select('id').eq('follower_id', user.id).eq('following_id', profileId).maybeSingle();
         setIsFollowing(!!followData);
       }
-
       setLoading(false);
     };
-
     fetchProfile();
     fetchSaved();
   }, [profileId, user, isOwnProfile, fetchSaved]);
-
-  // Fetch saved profiles for display
-  const [savedProfiles, setSavedProfiles] = useState<Record<string, any>>({});
-  useEffect(() => {
-    if (savedPosts.length === 0) return;
-    const userIds = [...new Set(savedPosts.map(p => p.user_id))];
-    supabase.from('profiles').select('user_id, full_name, username, avatar_url').in('user_id', userIds).then(({ data }) => {
-      if (data) {
-        const map: Record<string, any> = {};
-        data.forEach((p: any) => { map[p.user_id] = p; });
-        setSavedProfiles(map);
-      }
-    });
-  }, [savedPosts]);
 
   const handleFollow = async () => {
     if (!user || !profileId) return;
@@ -158,7 +131,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex-1 border-r border-border max-w-2xl flex items-center justify-center py-16">
+      <div className="flex-1 max-w-2xl mx-auto flex items-center justify-center py-16">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
@@ -166,7 +139,7 @@ export default function Profile() {
 
   if (!profile) {
     return (
-      <div className="flex-1 border-r border-border max-w-2xl py-16 text-center">
+      <div className="flex-1 max-w-2xl mx-auto py-16 text-center">
         <p className="text-lg font-display font-semibold text-foreground">User not found</p>
       </div>
     );
@@ -176,7 +149,7 @@ export default function Profile() {
   const displayPosts = activeTab === 'posts' ? posts : savedPosts;
 
   return (
-    <div className="flex-1 border-r border-border max-w-2xl pb-16 md:pb-0">
+    <div className="flex-1 max-w-2xl mx-auto pb-16 md:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/70 backdrop-blur-xl px-4 py-2">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-9 w-9">
@@ -236,7 +209,7 @@ export default function Profile() {
 
       {/* Tabs */}
       <div className="flex border-b border-border">
-        {([{ key: 'posts', label: 'My Posts' }, { key: 'tallennetut', label: 'Tallennetut' }] as const).map((tab) => (
+        {([{ key: 'posts', label: 'Posts' }, { key: 'saved', label: 'Saved' }] as const).map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
@@ -246,24 +219,23 @@ export default function Profile() {
                 : 'text-muted-foreground hover:bg-muted/50'
             }`}
           >
-            {isOwnProfile ? tab.label : tab.key === 'posts' ? 'Posts' : 'Saved'}
+            {tab.label}
           </button>
         ))}
       </div>
 
       {/* Content */}
-      {activeTab === 'tallennetut' && !isOwnProfile ? (
+      {activeTab === 'saved' && !isOwnProfile ? (
         <div className="py-12 text-center">
           <p className="text-muted-foreground text-sm">Saved posts are private</p>
         </div>
       ) : displayPosts.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-muted-foreground text-sm">
-            {activeTab === 'tallennetut' ? 'No saved posts yet. Bookmark posts to see them here!' : 'No posts yet'}
+            {activeTab === 'saved' ? 'No saved posts yet. Save posts to see them here!' : 'No posts yet'}
           </p>
         </div>
-      ) : activeTab === 'tallennetut' ? (
-        /* Saved posts grid */
+      ) : activeTab === 'saved' ? (
         <div className="grid grid-cols-3 gap-0.5 p-0.5">
           {savedPosts.map((post) => (
             <div key={post.id} className="aspect-square bg-muted overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
@@ -278,18 +250,21 @@ export default function Profile() {
           ))}
         </div>
       ) : (
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            author={{ full_name: profile.full_name, username: profile.username, avatar_url: profile.avatar_url }}
-            liked={likedPosts.has(post.id)}
-            saved={savedPostIds.has(post.id)}
-            onLike={() => handleLike(post.id)}
-            onSave={() => handleSave(post.id)}
-            onDelete={() => handleDelete(post.id)}
-          />
-        ))
+        <div className="grid grid-cols-2 gap-3 p-4">
+          {posts.map((post, index) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              author={{ full_name: profile.full_name, username: profile.username, avatar_url: profile.avatar_url }}
+              liked={likedPosts.has(post.id)}
+              saved={savedPostIds.has(post.id)}
+              onLike={() => handleLike(post.id)}
+              onSave={() => handleSave(post.id)}
+              onDelete={() => handleDelete(post.id)}
+              colorIndex={index}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

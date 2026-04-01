@@ -2,35 +2,33 @@ import { Search, TrendingUp, Flame } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 const trendingTopics = [
-  { tag: '#MealPrep', posts: '2.4K julkaisua' },
-  { tag: '#TerveellisetReseptit', posts: '1.8K julkaisua' },
-  { tag: '#NopeaIllallinen', posts: '956 julkaisua' },
-  { tag: '#VegaaniRuoka', posts: '743 julkaisua' },
-  { tag: '#BudjettiAteria', posts: '512 julkaisua' },
+  { tag: '#MealPrep', posts: '2.4K posts' },
+  { tag: '#HealthyRecipes', posts: '1.8K posts' },
+  { tag: '#QuickDinner', posts: '956 posts' },
+  { tag: '#VeganFood', posts: '743 posts' },
+  { tag: '#BudgetMeals', posts: '512 posts' },
 ];
 
 const suggestedUsers = [
-  { name: 'Kokki Maria', handle: '@kokkimaria', avatar: '👩‍🍳' },
-  { name: 'Terve Jussi', handle: '@tervejussi', avatar: '🧑‍🍳' },
-  { name: 'Leivontakuningatar', handle: '@leivonta', avatar: '👸' },
+  { name: 'Chef Maria', handle: '@chefmaria', avatar: '👩‍🍳' },
+  { name: 'Healthy Joe', handle: '@healthyjoe', avatar: '🧑‍🍳' },
+  { name: 'Baking Queen', handle: '@bakingqueen', avatar: '👸' },
 ];
 
 export function RightSidebar() {
   return (
     <aside className="hidden xl:flex xl:w-80 flex-col gap-4 p-4 sticky top-0 h-screen overflow-y-auto">
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Hae MealCraftista"
+          placeholder="Search MealCraft"
           className="rounded-full pl-10 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary h-10"
         />
       </div>
 
-      {/* Trending */}
       <div className="rounded-2xl bg-muted/50 p-4">
         <h3 className="font-display text-base font-bold text-foreground mb-3 flex items-center gap-1.5">
-          <Flame className="h-4 w-4 text-accent" /> Trendit
+          <Flame className="h-4 w-4 text-accent" /> Trending
         </h3>
         <div className="flex flex-col">
           {trendingTopics.map((topic) => (
@@ -45,9 +43,8 @@ export function RightSidebar() {
         </div>
       </div>
 
-      {/* Who to follow */}
       <div className="rounded-2xl bg-muted/50 p-4">
-        <h3 className="font-display text-base font-bold text-foreground mb-3">Seuraa heitä</h3>
+        <h3 className="font-display text-base font-bold text-foreground mb-3">Who to Follow</h3>
         <div className="flex flex-col gap-1">
           {suggestedUsers.map((u) => (
             <div key={u.handle} className="flex items-center gap-3 cursor-pointer hover:bg-muted rounded-xl p-2.5 -mx-1 transition-colors">
@@ -59,7 +56,7 @@ export function RightSidebar() {
                 <p className="text-[11px] text-muted-foreground">{u.handle}</p>
               </div>
               <button className="text-xs font-semibold text-primary-foreground bg-foreground rounded-full px-4 py-1.5 hover:opacity-80 transition-opacity">
-                Seuraa
+                Follow
               </button>
             </div>
           ))}
