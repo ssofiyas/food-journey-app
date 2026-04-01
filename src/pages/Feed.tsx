@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ComposePost } from '@/components/ComposePost';
 import { PostCard } from '@/components/PostCard';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Post {
   id: string;
@@ -43,7 +44,6 @@ export default function Feed() {
 
   useEffect(() => {
     if (!user) return;
-    // Fetch following IDs and user preferences in parallel
     supabase.from('follows').select('following_id').eq('follower_id', user.id).then(({ data }) => {
       if (data) setFollowingIds(data.map((f: any) => f.following_id));
     });
@@ -52,7 +52,6 @@ export default function Feed() {
     });
   }, [user]);
 
-  // Score a post based on user's tag preferences
   const scorePost = useCallback((post: Post): number => {
     if (!post.tags || post.tags.length === 0 || Object.keys(userPreferences).length === 0) return 0;
     let score = 0;
@@ -70,18 +69,14 @@ export default function Feed() {
     const { data } = await query;
     if (data) {
       let sortedPosts = data as Post[];
-      
-      // For "global" tab, apply recommendation scoring
       if (activeTab === 'global' && Object.keys(userPreferences).length > 0) {
         sortedPosts = [...sortedPosts].sort((a, b) => {
           const scoreA = scorePost(a);
           const scoreB = scorePost(b);
           if (scoreA !== scoreB) return scoreB - scoreA;
-          // Fall back to recency
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
       }
-      
       setPosts(sortedPosts);
       const userIds = [...new Set(data.map((p: any) => p.user_id))];
       if (userIds.length > 0) {
@@ -144,14 +139,14 @@ export default function Feed() {
     } else {
       await supabase.from('saved_posts').insert({ user_id: user.id, post_id: postId });
       setSavedPosts((prev) => new Set(prev).add(postId));
-      toast({ title: 'Tallennettu!' });
+      toast({ title: 'Saved!' });
     }
   };
 
   const handleDelete = async (postId: string) => {
     await supabase.from('posts').delete().eq('id', postId);
     setPosts((prev) => prev.filter((p) => p.id !== postId));
-    toast({ title: 'Julkaisu poistettu' });
+    toast({ title: 'Post deleted' });
   };
 
   return (
@@ -159,8 +154,10 @@ export default function Feed() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <h1 className="font-display text-xl font-bold text-foreground">MealCraft</h1>
-          <Sparkles className="h-5 w-5 text-primary" />
+          <h1 className="font-display text-2xl font-bold text-foreground">My Feed</h1>
+          <Button variant="outline" size="sm" className="rounded-full gap-1.5 text-xs">
+            <Filter className="h-3.5 w-3.5" /> Filter
+          </Button>
         </div>
         <div className="flex">
           {(['global', 'following'] as const).map(tab => (
@@ -168,12 +165,10 @@ export default function Feed() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2.5 text-sm font-semibold transition-all relative ${
-                activeTab === tab
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground/70'
+                activeTab === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
               }`}
             >
-              {tab === 'global' ? 'Sinulle' : 'Seuratut'}
+              {tab === 'global' ? 'For You' : 'Following'}
               {activeTab === tab && (
                 <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-primary rounded-full" />
               )}
@@ -194,15 +189,15 @@ export default function Feed() {
             <Sparkles className="h-7 w-7 text-muted-foreground" />
           </div>
           <p className="text-lg font-display font-semibold text-foreground">
-            {activeTab === 'following' ? 'Seuraa käyttäjiä!' : 'Ei julkaisuja vielä'}
+            {activeTab === 'following' ? 'Follow some users!' : 'No posts yet'}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeTab === 'following' ? 'Vaihda "Sinulle" löytääksesi sisältöä' : 'Ole ensimmäinen ja jaa jotain!'}
+            {activeTab === 'following' ? 'Switch to "For You" to discover content' : 'Be the first to share something!'}
           </p>
         </div>
       ) : (
-        <div>
-          {posts.map((post) => (
+        <div className="grid grid-cols-2 gap-3 p-4">
+          {posts.map((post, index) => (
             <PostCard
               key={post.id}
               post={post}
@@ -212,6 +207,7 @@ export default function Feed() {
               onLike={() => handleLike(post.id)}
               onSave={() => handleSave(post.id)}
               onDelete={() => handleDelete(post.id)}
+              colorIndex={index}
             />
           ))}
         </div>

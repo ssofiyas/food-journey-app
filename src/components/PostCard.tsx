@@ -1,10 +1,9 @@
-import { Heart, MessageCircle, Bookmark, Send, MoreHorizontal, User, ChefHat, ShoppingCart, CalendarPlus, Pencil, Trash2 } from 'lucide-react';
+import { Clock, ChefHat, User, MoreHorizontal, Pencil, Trash2, CalendarPlus, Bookmark } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +45,7 @@ interface PostCardProps {
     is_recipe?: boolean;
     recipe_ingredients?: Ingredient[];
     recipe_instructions?: string[];
+    tags?: string[];
   };
   author?: {
     full_name: string | null;
@@ -59,193 +59,147 @@ interface PostCardProps {
   onDelete?: () => void;
   onEdit?: () => void;
   onAddToPlan?: () => void;
+  colorIndex?: number;
 }
 
-export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete, onEdit, onAddToPlan }: PostCardProps) {
+const CARD_COLORS = [
+  'bg-orange-400',
+  'bg-rose-500',
+  'bg-lime-400',
+  'bg-yellow-400',
+  'bg-pink-300',
+  'bg-teal-400',
+  'bg-violet-400',
+  'bg-sky-400',
+];
+
+const CARD_TEXT_COLORS = [
+  'text-orange-950',
+  'text-white',
+  'text-lime-950',
+  'text-yellow-950',
+  'text-pink-950',
+  'text-teal-950',
+  'text-violet-950',
+  'text-sky-950',
+];
+
+export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete, onEdit, onAddToPlan, colorIndex = 0 }: PostCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [likeAnim, setLikeAnim] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const displayName = author?.full_name || 'Anonymous';
-  const handle = author?.username ? `@${author.username}` : '@user';
   const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
   const isOwner = user?.id === post.user_id;
+  const totalTime = post.is_recipe ? '15 min' : '';
 
   const hasRecipeData = post.is_recipe &&
     ((post.recipe_ingredients && post.recipe_ingredients.length > 0) ||
      (post.recipe_instructions && post.recipe_instructions.length > 0));
 
-  const handleLikeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLikeAnim(true);
-    setTimeout(() => setLikeAnim(false), 300);
-    onLike?.();
-  };
+  const bgColor = CARD_COLORS[colorIndex % CARD_COLORS.length];
+  const textColor = CARD_TEXT_COLORS[colorIndex % CARD_TEXT_COLORS.length];
 
-  const handleDoubleClick = () => {
-    if (!liked) {
-      setLikeAnim(true);
-      setTimeout(() => setLikeAnim(false), 300);
-      onLike?.();
+  const handleCardClick = () => {
+    if (hasRecipeData) {
+      setShowDetail(true);
     }
-  };
-
-  const handleProfileClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/profile/${post.user_id}`);
+    // Silent like on click
+    onLike?.();
   };
 
   return (
     <>
-      <article className="bg-card border-b border-border animate-fade-in">
-        {/* Header - Instagram style */}
-        <div className="flex items-center gap-3 px-4 py-3">
+      <div
+        onClick={handleCardClick}
+        className={`${bgColor} rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl relative group`}
+      >
+        {/* Top row: author & time */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
           <button
-            onClick={handleProfileClick}
-            className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-primary to-accent p-[2px] transition-transform hover:scale-105"
+            onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.user_id}`); }}
+            className={`text-sm font-semibold ${textColor} hover:opacity-70 transition-opacity`}
           >
-            <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
-              {author?.avatar_url ? (
-                <img src={author.avatar_url} alt={displayName} className="h-full w-full rounded-full object-cover" />
-              ) : (
-                <User className="h-4 w-4 text-primary" />
-              )}
-            </div>
+            {displayName}
           </button>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <button onClick={handleProfileClick} className="font-semibold text-sm text-foreground truncate hover:opacity-70 transition-opacity">
-                {displayName}
-              </button>
-              {post.is_recipe && (
-                <Badge variant="secondary" className="text-[9px] gap-0.5 px-1.5 py-0 h-4 shrink-0 bg-primary/10 text-primary border-0">
-                  <ChefHat className="h-2.5 w-2.5" /> Resepti
-                </Badge>
-              )}
-            </div>
-            <p className="text-[11px] text-muted-foreground">{timeAgo}</p>
-          </div>
-
-          {/* Three-dot menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={e => e.stopPropagation()}>
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
-              {isOwner && (
-                <>
+          <div className="flex items-center gap-2">
+            {totalTime && (
+              <span className={`text-xs ${textColor} opacity-80 border border-current/20 rounded-full px-2.5 py-0.5`}>
+                <Clock className="h-3 w-3 inline mr-1" />{totalTime}
+              </span>
+            )}
+            {isOwner && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button onClick={e => e.stopPropagation()} className={`${textColor} opacity-60 hover:opacity-100 transition-opacity`}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
                   <DropdownMenuItem onClick={() => onEdit?.()}>
-                    <Pencil className="h-4 w-4 mr-2" /> Muokkaa
+                    <Pencil className="h-4 w-4 mr-2" /> Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive" onClick={() => setShowDeleteConfirm(true)}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Poista
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
                   </DropdownMenuItem>
-                </>
-              )}
-              {hasRecipeData && (
-                <DropdownMenuItem onClick={() => onAddToPlan?.()}>
-                  <CalendarPlus className="h-4 w-4 mr-2" /> Lisää suunnitelmaan
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Image - Instagram full-width style */}
-        {post.image_url && (
-          <div
-            className="relative w-full cursor-pointer select-none"
-            onDoubleClick={handleDoubleClick}
-          >
-            <img
-              src={post.image_url}
-              alt=""
-              className="w-full object-cover max-h-[500px]"
-              loading="lazy"
-            />
-            {/* Double-tap heart animation */}
-            {likeAnim && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <Heart className="h-20 w-20 text-white fill-white drop-shadow-lg animate-like-pop" />
-              </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Actions - Instagram style */}
-        <div className="flex items-center justify-between px-4 pt-3">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleLikeClick}
-              className={`transition-transform active:scale-125 ${liked ? 'text-destructive' : 'text-foreground'}`}
-            >
-              <Heart className={`h-6 w-6 ${liked ? 'fill-current' : ''}`} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); if (hasRecipeData) setShowDetail(true); }}
-              className="text-foreground transition-transform active:scale-110"
-            >
-              <MessageCircle className="h-6 w-6" />
-            </button>
-            <button className="text-foreground transition-transform active:scale-110">
-              <Send className="h-5 w-5" />
-            </button>
+        {/* Image */}
+        {post.image_url && (
+          <div className="px-3 pb-2">
+            <img
+              src={post.image_url}
+              alt={post.content}
+              className="w-full aspect-square object-cover rounded-2xl"
+              loading="lazy"
+            />
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); onSave?.(); }}
-            className={`transition-transform active:scale-125 ${saved ? 'text-foreground' : 'text-foreground'}`}
-          >
-            <Bookmark className={`h-6 w-6 ${saved ? 'fill-current' : ''}`} />
-          </button>
-        </div>
-
-        {/* Likes count */}
-        {post.likes_count > 0 && (
-          <p className="px-4 pt-1.5 text-sm font-semibold text-foreground">
-            {post.likes_count} {post.likes_count === 1 ? 'tykkäys' : 'tykkäystä'}
-          </p>
         )}
 
-        {/* Content */}
-        <div className="px-4 pt-1 pb-2">
-          <p className="text-sm text-foreground leading-relaxed">
-            <button onClick={handleProfileClick} className="font-semibold mr-1.5 hover:opacity-70 transition-opacity">
-              {displayName}
+        {/* Title / content */}
+        <div className="px-4 pb-4">
+          <h3 className={`font-display text-2xl font-bold ${textColor} leading-tight`}>
+            {post.content.length > 60 ? post.content.slice(0, 60) + '...' : post.content}
+          </h3>
+          {post.is_recipe && (
+            <span className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${textColor} opacity-70`}>
+              <ChefHat className="h-3.5 w-3.5" /> Recipe
+            </span>
+          )}
+        </div>
+
+        {/* Hover actions (hidden by default) */}
+        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onSave && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onSave(); }}
+              className={`h-8 w-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors`}
+            >
+              <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
             </button>
-            <span className="whitespace-pre-wrap">{post.content}</span>
-          </p>
+          )}
+          {hasRecipeData && onAddToPlan && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddToPlan(); }}
+              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+            >
+              <CalendarPlus className="h-4 w-4" />
+            </button>
+          )}
         </div>
-
-        {/* Recipe quick peek */}
-        {hasRecipeData && (
-          <button
-            onClick={() => setShowDetail(true)}
-            className="px-4 pb-1 text-sm text-primary font-medium hover:opacity-70 transition-opacity"
-          >
-            Näytä resepti →
-          </button>
-        )}
-
-        {/* Comments preview */}
-        {post.comments_count > 0 && (
-          <button className="px-4 pb-2 text-sm text-muted-foreground hover:opacity-70 transition-opacity">
-            Näytä kaikki {post.comments_count} kommenttia
-          </button>
-        )}
-
-        <div className="h-1" />
-      </article>
+      </div>
 
       {/* Full-screen Recipe Detail */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
           {post.image_url && (
             <div className="w-full">
-              <img src={post.image_url} alt="" className="w-full object-cover max-h-72" />
+              <img src={post.image_url} alt="" className="w-full object-cover max-h-72 rounded-t-lg" />
             </div>
           )}
           <div className="p-5 space-y-5">
@@ -262,7 +216,7 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
                 </div>
                 <div>
                   <DialogTitle className="text-base font-semibold">{displayName}</DialogTitle>
-                  <p className="text-xs text-muted-foreground">{handle} · {timeAgo}</p>
+                  <p className="text-xs text-muted-foreground">{timeAgo}</p>
                 </div>
               </div>
             </DialogHeader>
@@ -271,8 +225,8 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
 
             {post.recipe_ingredients && post.recipe_ingredients.length > 0 && (
               <div className="rounded-2xl bg-muted/50 p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                  <ShoppingCart className="h-3.5 w-3.5" /> Ainekset
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Ingredients
                 </h3>
                 <ul className="space-y-2">
                   {post.recipe_ingredients.map((ing, i) => (
@@ -287,7 +241,7 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
 
             {post.recipe_instructions && post.recipe_instructions.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Vaiheet</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Steps</h3>
                 <ol className="space-y-3">
                   {post.recipe_instructions.map((step, i) => (
                     <li key={i} className="text-sm text-foreground flex gap-3">
@@ -299,22 +253,13 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
               </div>
             )}
 
-            {/* Action buttons in detail view */}
             {hasRecipeData && (
               <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-xl"
-                  onClick={() => onAddToPlan?.()}
-                >
-                  <CalendarPlus className="h-4 w-4 mr-2" /> Suunnitelmaan
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => onAddToPlan?.()}>
+                  <CalendarPlus className="h-4 w-4 mr-2" /> Add to Plan
                 </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-xl"
-                  onClick={() => onSave?.()}
-                >
-                  <Bookmark className={`h-4 w-4 mr-2 ${saved ? 'fill-current' : ''}`} /> Tallenna
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => onSave?.()}>
+                  <Bookmark className={`h-4 w-4 mr-2 ${saved ? 'fill-current' : ''}`} /> Save
                 </Button>
               </div>
             )}
@@ -326,13 +271,13 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Poista julkaisu?</AlertDialogTitle>
-            <AlertDialogDescription>Tätä toimintoa ei voi peruuttaa. Julkaisu poistetaan pysyvästi.</AlertDialogDescription>
+            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone. The post will be permanently deleted.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Peruuta</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { onDelete?.(); setShowDeleteConfirm(false); }}>
-              Poista
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

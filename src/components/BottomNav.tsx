@@ -3,10 +3,10 @@ import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 
 const navItems = [
-  { to: '/feed', icon: Home, label: 'Koti' },
-  { to: '/explore', icon: Search, label: 'Haku' },
-  { to: '/planner', icon: CalendarDays, label: 'Suunn.' },
-  { to: '/profile', icon: User, label: 'Profiili' },
+  { to: '/feed', icon: Home, label: 'Home' },
+  { to: '/explore', icon: Search, label: 'Explore' },
+  { to: '/planner', icon: CalendarDays, label: 'Planner' },
+  { to: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function BottomNav() {
@@ -28,7 +28,6 @@ export function BottomNav() {
           </NavLink>
         ))}
 
-        {/* Center Create button */}
         <button
           onClick={() => navigate('/feed', { state: { openCompose: true } })}
           className="flex items-center justify-center h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"

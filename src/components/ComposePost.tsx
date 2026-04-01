@@ -40,7 +40,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast({ title: 'Kuva liian suuri', description: 'Maks. 5MB', variant: 'destructive' });
+      toast({ title: 'Image too large', description: 'Max 5MB', variant: 'destructive' });
       return;
     }
     setImageFile(file);
@@ -70,8 +70,6 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
 
       const recipeIngredients = isRecipe ? ingredients.filter(i => i.name.trim()) : [];
       const recipeInstructions = isRecipe ? instructions.filter(i => i.trim()) : [];
-
-      // Extract hashtags from content + manual tags
       const hashtagsFromContent = (content.match(/#(\w+)/g) || []).map(t => t.slice(1).toLowerCase());
       const allTags = [...new Set([...tags, ...hashtagsFromContent])];
 
@@ -93,10 +91,10 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
       setTags([]);
       setTagInput('');
       setExpanded(false);
-      toast({ title: 'Julkaistu!' });
+      toast({ title: 'Published!' });
       onPostCreated?.();
     } catch (err: any) {
-      toast({ title: 'Virhe', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -114,7 +112,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
               <User className="h-4 w-4 text-primary" />
             </div>
           </div>
-          <span className="text-muted-foreground text-sm flex-1">Mitä on tänään ruokana?</span>
+          <span className="text-muted-foreground text-sm flex-1">What's cooking today?</span>
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
             <Plus className="h-4 w-4 text-primary-foreground" />
           </div>
@@ -135,7 +133,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Mitä on tänään ruokana?"
+            placeholder="What's cooking today?"
             className="min-h-[70px] resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
             maxLength={500}
             autoFocus
@@ -150,11 +148,10 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
             </div>
           )}
 
-          {/* Recipe Toggle */}
           <div className="flex items-center gap-2 mt-3">
             <Switch checked={isRecipe} onCheckedChange={setIsRecipe} id="recipe-toggle" />
             <Label htmlFor="recipe-toggle" className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer">
-              <ChefHat className="h-3.5 w-3.5" /> Tämä on resepti
+              <ChefHat className="h-3.5 w-3.5" /> This is a recipe
             </Label>
           </div>
 
@@ -170,9 +167,9 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
                 </span>
               ))}
               <input
-                placeholder="#lisää tagi"
+                placeholder="#add tag"
                 value={tagInput}
-                onChange={e => setTagInput(e.target.value.replace(/[^a-zäöåA-ZÄÖÅ0-9]/g, ''))}
+                onChange={e => setTagInput(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && tagInput.trim()) {
                     e.preventDefault();
@@ -189,16 +186,16 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
           {isRecipe && (
             <div className="space-y-3 p-3 rounded-2xl bg-muted/50 border border-border mt-3 animate-fade-in">
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Ainekset</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Ingredients</p>
                 {ingredients.map((ing, i) => (
                   <div key={i} className="flex gap-1.5 mb-1.5">
-                    <Input placeholder="Määrä" value={ing.amount} className="w-16 h-8 text-xs rounded-lg" onChange={e => {
+                    <Input placeholder="Qty" value={ing.amount} className="w-16 h-8 text-xs rounded-lg" onChange={e => {
                       const u = [...ingredients]; u[i] = { ...ing, amount: e.target.value }; setIngredients(u);
                     }} />
-                    <Input placeholder="Yks." value={ing.unit} className="w-16 h-8 text-xs rounded-lg" onChange={e => {
+                    <Input placeholder="Unit" value={ing.unit} className="w-16 h-8 text-xs rounded-lg" onChange={e => {
                       const u = [...ingredients]; u[i] = { ...ing, unit: e.target.value }; setIngredients(u);
                     }} />
-                    <Input placeholder="Ainesosa" value={ing.name} className="flex-1 h-8 text-xs rounded-lg" onChange={e => {
+                    <Input placeholder="Ingredient" value={ing.name} className="flex-1 h-8 text-xs rounded-lg" onChange={e => {
                       const u = [...ingredients]; u[i] = { ...ing, name: e.target.value }; setIngredients(u);
                     }} />
                     {ingredients.length > 1 && (
@@ -209,15 +206,15 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
                   </div>
                 ))}
                 <Button variant="ghost" size="sm" className="text-xs h-7 text-primary" onClick={() => setIngredients([...ingredients, { name: '', amount: '', unit: '' }])}>
-                  + Lisää
+                  + Add
                 </Button>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Vaiheet</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Steps</p>
                 {instructions.map((step, i) => (
                   <div key={i} className="flex gap-1.5 mb-1.5 items-start">
                     <span className="text-xs text-muted-foreground mt-2 w-4 shrink-0">{i + 1}.</span>
-                    <Textarea placeholder={`Vaihe ${i + 1}`} value={step} className="min-h-[36px] text-xs rounded-lg" onChange={e => {
+                    <Textarea placeholder={`Step ${i + 1}`} value={step} className="min-h-[36px] text-xs rounded-lg" onChange={e => {
                       const u = [...instructions]; u[i] = e.target.value; setInstructions(u);
                     }} />
                     {instructions.length > 1 && (
@@ -228,7 +225,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
                   </div>
                 ))}
                 <Button variant="ghost" size="sm" className="text-xs h-7 text-primary" onClick={() => setInstructions([...instructions, ''])}>
-                  + Lisää vaihe
+                  + Add step
                 </Button>
               </div>
             </div>
@@ -243,14 +240,14 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="text-xs" onClick={() => setExpanded(false)}>
-                Peruuta
+                Cancel
               </Button>
               <Button
                 className="rounded-full px-5 h-8 text-sm font-semibold"
                 disabled={(!content.trim() && !imageFile) || loading}
                 onClick={handlePost}
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Julkaise'}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Post'}
               </Button>
             </div>
           </div>
