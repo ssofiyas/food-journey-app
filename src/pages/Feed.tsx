@@ -149,6 +149,20 @@ export default function Feed() {
     toast({ title: 'Post deleted' });
   };
 
+  const handleCookedThis = async (post: Post) => {
+    if (!user) return;
+    const content = `🎉 I just cooked "${post.content.split('\n')[0].slice(0, 50)}"! It was amazing! #cookedthis`;
+    await supabase.from('posts').insert({
+      user_id: user.id,
+      content,
+      image_url: post.image_url,
+      is_recipe: false,
+      tags: ['cookedthis', ...(post.tags || [])],
+    });
+    toast({ title: '🎉 Posted your cooking success!' });
+    fetchPosts();
+  };
+
   return (
     <div className="flex-1 max-w-2xl mx-auto pb-16 md:pb-0">
       {/* Header */}
@@ -207,6 +221,7 @@ export default function Feed() {
               onLike={() => handleLike(post.id)}
               onSave={() => handleSave(post.id)}
               onDelete={() => handleDelete(post.id)}
+              onCookedThis={() => handleCookedThis(post)}
               colorIndex={index}
             />
           ))}
