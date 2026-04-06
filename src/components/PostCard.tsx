@@ -1,4 +1,4 @@
-import { Clock, ChefHat, User, MoreHorizontal, Pencil, Trash2, CalendarPlus, Bookmark } from 'lucide-react';
+import { Clock, ChefHat, User, MoreHorizontal, Pencil, Trash2, CalendarPlus, Bookmark, PartyPopper } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +59,7 @@ interface PostCardProps {
   onDelete?: () => void;
   onEdit?: () => void;
   onAddToPlan?: () => void;
+  onCookedThis?: () => void;
   colorIndex?: number;
 }
 
@@ -84,7 +85,7 @@ const CARD_TEXT_COLORS = [
   'text-sky-950',
 ];
 
-export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete, onEdit, onAddToPlan, colorIndex = 0 }: PostCardProps) {
+export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete, onEdit, onAddToPlan, onCookedThis, colorIndex = 0 }: PostCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { user } = useAuth();
@@ -191,6 +192,15 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
               <CalendarPlus className="h-4 w-4" />
             </button>
           )}
+          {hasRecipeData && onCookedThis && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCookedThis(); }}
+              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+              title="Cooked This!"
+            >
+              <PartyPopper className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -254,12 +264,15 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
             )}
 
             {hasRecipeData && (
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-2 flex-wrap">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => onAddToPlan?.()}>
                   <CalendarPlus className="h-4 w-4 mr-2" /> Add to Plan
                 </Button>
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => onSave?.()}>
                   <Bookmark className={`h-4 w-4 mr-2 ${saved ? 'fill-current' : ''}`} /> Save
+                </Button>
+                <Button variant="default" className="flex-1 rounded-xl gap-2" onClick={() => onCookedThis?.()}>
+                  <PartyPopper className="h-4 w-4" /> Cooked This!
                 </Button>
               </div>
             )}
