@@ -1,4 +1,4 @@
-import { Home, Search, User, ChefHat, CalendarDays, ListChecks, Settings, LogOut } from 'lucide-react';
+import { Home, Search, User, ChefHat, CalendarDays, ListChecks, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,8 @@ const mainNav = [
 
 const toolsNav = [
   { title: 'Recipes', url: '/recipes', icon: ChefHat },
-  { title: 'Meal Planner', url: '/planner', icon: CalendarDays },
-  { title: 'Shopping List', url: '/shopping', icon: ListChecks },
+  { title: 'Planner', url: '/planner', icon: CalendarDays },
+  { title: 'Shopping', url: '/shopping', icon: ListChecks },
 ];
 
 export function AppSidebar() {
@@ -39,13 +39,13 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarContent className="pt-4">
-        <div className={`flex items-center gap-2.5 px-4 pb-6 ${collapsed ? 'justify-center' : ''}`}>
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
+    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
+      <SidebarContent className="pt-5">
+        <div className={`flex items-center gap-2.5 px-4 pb-8 ${collapsed ? 'justify-center' : ''}`}>
+          <div className="h-10 w-10 rounded-2xl gradient-hero flex items-center justify-center shrink-0 shadow-sm">
             <ChefHat className="h-5 w-5 text-primary-foreground" />
           </div>
-          {!collapsed && <span className="font-display text-xl font-bold text-foreground">MealCraft</span>}
+          {!collapsed && <span className="font-display text-xl font-bold text-foreground tracking-tight">MealCraft</span>}
         </div>
 
         <SidebarGroup>
@@ -57,10 +57,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className="flex items-center gap-4 rounded-xl px-4 py-3 text-base font-body text-foreground transition-all hover:bg-muted"
-                      activeClassName="font-semibold bg-muted"
+                      className="flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-body text-foreground/80 transition-all hover:bg-muted hover:text-foreground"
+                      activeClassName="font-semibold bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
                     >
-                      <item.icon className="h-6 w-6 shrink-0" strokeWidth={1.5} />
+                      <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -73,7 +73,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             {!collapsed && (
-              <p className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tools</p>
+              <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tools</p>
             )}
             <SidebarMenu>
               {toolsNav.map((item) => (
@@ -82,10 +82,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className="flex items-center gap-4 rounded-xl px-4 py-3 font-body text-foreground transition-all hover:bg-muted"
-                      activeClassName="font-semibold bg-muted"
+                      className="flex items-center gap-4 rounded-xl px-4 py-3 text-[15px] font-body text-foreground/80 transition-all hover:bg-muted hover:text-foreground"
+                      activeClassName="font-semibold bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
                     >
-                      <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />
+                      <item.icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -113,7 +113,7 @@ export function AppSidebar() {
               </div>
             )}
             {!collapsed && (
-              <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0 h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0 h-8 w-8 text-muted-foreground hover:text-foreground">
                 <LogOut className="h-4 w-4" />
               </Button>
             )}

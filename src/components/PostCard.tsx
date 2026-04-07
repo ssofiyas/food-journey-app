@@ -1,4 +1,4 @@
-import { Clock, ChefHat, User, MoreHorizontal, Pencil, Trash2, CalendarPlus, Bookmark, PartyPopper } from 'lucide-react';
+import { Clock, ChefHat, User, MoreHorizontal, Pencil, Trash2, CalendarPlus, Bookmark, PartyPopper, Heart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -63,77 +63,111 @@ interface PostCardProps {
   colorIndex?: number;
 }
 
-const CARD_COLORS = [
-  'bg-orange-400',
-  'bg-rose-500',
-  'bg-lime-400',
-  'bg-yellow-400',
-  'bg-pink-300',
-  'bg-teal-400',
-  'bg-violet-400',
-  'bg-sky-400',
-];
-
-const CARD_TEXT_COLORS = [
-  'text-orange-950',
-  'text-white',
-  'text-lime-950',
-  'text-yellow-950',
-  'text-pink-950',
-  'text-teal-950',
-  'text-violet-950',
-  'text-sky-950',
-];
-
 export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete, onEdit, onAddToPlan, onCookedThis, colorIndex = 0 }: PostCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const displayName = author?.full_name || 'Anonymous';
+  const displayName = author?.full_name || author?.username || 'Anonymous';
   const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
   const isOwner = user?.id === post.user_id;
-  const totalTime = post.is_recipe ? '15 min' : '';
 
   const hasRecipeData = post.is_recipe &&
     ((post.recipe_ingredients && post.recipe_ingredients.length > 0) ||
      (post.recipe_instructions && post.recipe_instructions.length > 0));
 
-  const bgColor = CARD_COLORS[colorIndex % CARD_COLORS.length];
-  const textColor = CARD_TEXT_COLORS[colorIndex % CARD_TEXT_COLORS.length];
+  const handleDoubleClick = () => {
+    if (!showHeart) {
+      setShowHeart(true);
+      if (!liked) onLike?.();
+      setTimeout(() => setShowHeart(false), 600);
+    }
+  };
 
   const handleCardClick = () => {
     if (hasRecipeData) {
       setShowDetail(true);
     }
-    // Silent like on click
-    onLike?.();
   };
 
   return (
     <>
       <div
         onClick={handleCardClick}
-        className={`${bgColor} rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl relative group`}
+        onDoubleClick={handleDoubleClick}
+        className="bg-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-card-hover shadow-card border border-border/50 group relative"
       >
-        {/* Top row: author & time */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.user_id}`); }}
-            className={`text-sm font-semibold ${textColor} hover:opacity-70 transition-opacity`}
-          >
-            {displayName}
-          </button>
-          <div className="flex items-center gap-2">
-            {totalTime && (
-              <span className={`text-xs ${textColor} opacity-80 border border-current/20 rounded-full px-2.5 py-0.5`}>
-                <Clock className="h-3 w-3 inline mr-1" />{totalTime}
+        {/* Image */}
+        {post.image_url && (
+          <div className="relative overflow-hidden">
+            <img
+              src={post.image_url}
+              alt={post.content}
+              className="w-full aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            {/* Double-tap heart */}
+            {showHeart && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <Heart className="h-16 w-16 text-primary fill-primary animate-like-pop" />
+              </div>
+            )}
+            {/* Gradient overlay at bottom */}
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent" />
+            {/* Recipe badge */}
+            {post.is_recipe && (
+              <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2.5 py-1">
+                <ChefHat className="h-3 w-3" /> Recipe
               </span>
             )}
+            {/* Hover save/plan buttons */}
+            <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onSave && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onSave(); }}
+                  className={`h-8 w-8 rounded-full backdrop-blur-md flex items-center justify-center transition-colors ${saved ? 'bg-primary text-primary-foreground' : 'bg-black/30 text-white hover:bg-black/50'}`}
+                >
+                  <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
+                </button>
+              )}
+              {hasRecipeData && onCookedThis && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onCookedThis(); }}
+                  className="h-8 w-8 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+                  title="Cooked This!"
+                >
+                  <PartyPopper className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Content area */}
+        <div className="p-3.5">
+          {/* Author row */}
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.user_id}`); }}
+              className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+            >
+              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-accent p-[1.5px] shrink-0">
+                <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
+                  {author?.avatar_url ? (
+                    <img src={author.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                  ) : (
+                    <User className="h-3.5 w-3.5 text-primary" />
+                  )}
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-foreground">{displayName}</span>
+            </button>
+            <span className="text-[10px] text-muted-foreground ml-auto">{timeAgo}</span>
             {isOwner && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button onClick={e => e.stopPropagation()} className={`${textColor} opacity-60 hover:opacity-100 transition-opacity`}>
+                  <button onClick={e => e.stopPropagation()} className="text-muted-foreground hover:text-foreground transition-colors">
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -148,68 +182,45 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
               </DropdownMenu>
             )}
           </div>
-        </div>
 
-        {/* Image */}
-        {post.image_url && (
-          <div className="px-3 pb-2">
-            <img
-              src={post.image_url}
-              alt={post.content}
-              className="w-full aspect-square object-cover rounded-2xl"
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        {/* Title / content */}
-        <div className="px-4 pb-4">
-          <h3 className={`font-display text-2xl font-bold ${textColor} leading-tight`}>
-            {post.content.length > 60 ? post.content.slice(0, 60) + '...' : post.content}
+          {/* Title */}
+          <h3 className="font-display text-sm font-bold text-foreground leading-snug line-clamp-2">
+            {post.content}
           </h3>
-          {post.is_recipe && (
-            <span className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${textColor} opacity-70`}>
-              <ChefHat className="h-3.5 w-3.5" /> Recipe
-            </span>
-          )}
-        </div>
 
-        {/* Hover actions (hidden by default) */}
-        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onSave && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onSave(); }}
-              className={`h-8 w-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors`}
-            >
-              <Bookmark className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
-            </button>
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {post.tags.slice(0, 3).map(tag => (
+                <span key={tag} className="text-[10px] text-primary font-medium">#{tag}</span>
+              ))}
+            </div>
           )}
-          {hasRecipeData && onAddToPlan && (
+
+          {/* Bottom stats */}
+          <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-border/50">
             <button
-              onClick={(e) => { e.stopPropagation(); onAddToPlan(); }}
-              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onLike?.(); }}
+              className={`flex items-center gap-1 text-xs transition-colors ${liked ? 'text-primary font-semibold' : 'text-muted-foreground hover:text-primary'}`}
             >
-              <CalendarPlus className="h-4 w-4" />
+              <Heart className={`h-3.5 w-3.5 ${liked ? 'fill-current' : ''}`} />
+              {post.likes_count > 0 && post.likes_count}
             </button>
-          )}
-          {hasRecipeData && onCookedThis && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onCookedThis(); }}
-              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/40 transition-colors"
-              title="Cooked This!"
-            >
-              <PartyPopper className="h-4 w-4" />
-            </button>
-          )}
+            {hasRecipeData && (
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground ml-auto">
+                <Clock className="h-3 w-3" /> Quick view
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Full-screen Recipe Detail */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 rounded-2xl">
           {post.image_url && (
             <div className="w-full">
-              <img src={post.image_url} alt="" className="w-full object-cover max-h-72 rounded-t-lg" />
+              <img src={post.image_url} alt="" className="w-full object-cover max-h-72 rounded-t-2xl" />
             </div>
           )}
           <div className="p-5 space-y-5">
@@ -235,9 +246,7 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
 
             {post.recipe_ingredients && post.recipe_ingredients.length > 0 && (
               <div className="rounded-2xl bg-muted/50 p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                  Ingredients
-                </h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Ingredients</h3>
                 <ul className="space-y-2">
                   {post.recipe_ingredients.map((ing, i) => (
                     <li key={i} className="text-sm text-foreground flex items-center gap-2">
@@ -285,7 +294,7 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete post?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. The post will be permanently deleted.</AlertDialogDescription>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

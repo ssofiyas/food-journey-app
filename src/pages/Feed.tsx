@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ComposePost } from '@/components/ComposePost';
 import { PostCard } from '@/components/PostCard';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
 interface Post {
   id: string;
@@ -164,14 +163,11 @@ export default function Feed() {
   };
 
   return (
-    <div className="flex-1 max-w-2xl mx-auto pb-16 md:pb-0">
+    <div className="flex-1 max-w-2xl mx-auto pb-20 md:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <h1 className="font-display text-2xl font-bold text-foreground">My Feed</h1>
-          <Button variant="outline" size="sm" className="rounded-full gap-1.5 text-xs">
-            <Filter className="h-3.5 w-3.5" /> Filter
-          </Button>
+        <div className="flex items-center px-4 pt-4 pb-2">
+          <h1 className="font-display text-xl font-bold text-foreground">Feed</h1>
         </div>
         <div className="flex">
           {(['global', 'following'] as const).map(tab => (
@@ -184,7 +180,7 @@ export default function Feed() {
             >
               {tab === 'global' ? 'For You' : 'Following'}
               {activeTab === tab && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-primary rounded-full" />
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-primary rounded-full" />
               )}
             </button>
           ))}
@@ -210,7 +206,7 @@ export default function Feed() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 p-4">
+        <div className="grid grid-cols-2 gap-3 p-3">
           {posts.map((post, index) => (
             <PostCard
               key={post.id}
