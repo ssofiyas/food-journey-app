@@ -26,9 +26,9 @@ export function RightSidebar() {
         />
       </div>
 
-      <div className="rounded-2xl bg-muted/50 p-4">
-        <h3 className="font-display text-base font-bold text-foreground mb-3 flex items-center gap-1.5">
-          <Flame className="h-4 w-4 text-accent" /> Trending
+      <div className="rounded-2xl bg-card border border-border/50 shadow-card p-4">
+        <h3 className="font-display text-sm font-bold text-foreground mb-3 flex items-center gap-1.5">
+          <Flame className="h-4 w-4 text-primary" /> Trending
         </h3>
         <div className="flex flex-col">
           {trendingTopics.map((topic) => (
@@ -43,8 +43,8 @@ export function RightSidebar() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-muted/50 p-4">
-        <h3 className="font-display text-base font-bold text-foreground mb-3">Who to Follow</h3>
+      <div className="rounded-2xl bg-card border border-border/50 shadow-card p-4">
+        <h3 className="font-display text-sm font-bold text-foreground mb-3">Suggested</h3>
         <div className="flex flex-col gap-1">
           {suggestedUsers.map((u) => (
             <div key={u.handle} className="flex items-center gap-3 cursor-pointer hover:bg-muted rounded-xl p-2.5 -mx-1 transition-colors">
@@ -55,7 +55,7 @@ export function RightSidebar() {
                 <p className="text-sm font-semibold text-foreground truncate">{u.name}</p>
                 <p className="text-[11px] text-muted-foreground">{u.handle}</p>
               </div>
-              <button className="text-xs font-semibold text-primary-foreground bg-foreground rounded-full px-4 py-1.5 hover:opacity-80 transition-opacity">
+              <button className="text-xs font-semibold text-primary border border-primary/30 rounded-full px-3.5 py-1.5 hover:bg-primary/10 transition-colors">
                 Follow
               </button>
             </div>
