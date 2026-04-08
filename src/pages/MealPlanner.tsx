@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Utensils, Sparkles, Loader2, Bookmark } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Utensils, Sparkles, Loader2, Bookmark, ShoppingCart } from 'lucide-react';
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isToday } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { NutritionSnapshot } from '@/components/NutritionSnapshot';
 import { PlateAnalyzer } from '@/components/PlateAnalyzer';
 
@@ -36,6 +37,7 @@ const mealSlots = ['breakfast', 'lunch', 'dinner'];
 
 export default function MealPlanner() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,6 +192,38 @@ export default function MealPlanner() {
           </span>
           <Button variant="ghost" size="icon" onClick={() => nav(1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-2 w-full rounded-xl gap-1.5 text-xs"
+          onClick={async () => {
+            if (!user) return;
+            const weekMeals = plans.filter(p => p.custom_meal);
+            if (weekMeals.length === 0) {
+              toast({ title: 'No meals planned', description: 'Add some meals first' });
+              return;
+            }
+            const items = weekMeals.map(m => ({
+              name: m.custom_meal || 'Meal',
+              quantity: '1',
+              checked: false,
+              category: m.meal_type === 'breakfast' ? 'Breakfast' : m.meal_type === 'lunch' ? 'Lunch' : 'Dinner',
+            }));
+            const { error } = await supabase.from('shopping_lists').insert({
+              user_id: user.id,
+              name: `Week ${format(weekDays[0], 'MMM d')} Plan`,
+              items: items as any,
+            });
+            if (error) {
+              toast({ title: 'Error', description: error.message, variant: 'destructive' });
+            } else {
+              toast({ title: 'Shopping list created!', description: `${items.length} meals added` });
+              navigate('/shopping');
+            }
+          }}
+        >
+          <ShoppingCart className="h-3.5 w-3.5" /> Generate Shopping List from This Week
+        </Button>
       </div>
 
       {loading ? (
