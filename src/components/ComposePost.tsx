@@ -179,6 +179,15 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
             </div>
           )}
 
+          {videoPreview && (
+            <div className="relative mt-2 inline-block">
+              <video src={videoPreview} controls className="max-h-52 rounded-2xl border border-border" />
+              <button onClick={removeVideo} className="absolute top-2 right-2 rounded-full bg-foreground/70 p-1 hover:bg-foreground/90 transition-colors">
+                <X className="h-3.5 w-3.5 text-background" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mt-3">
             <Switch checked={isRecipe} onCheckedChange={setIsRecipe} id="recipe-toggle" />
             <Label htmlFor="recipe-toggle" className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer">
@@ -265,8 +274,12 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
           <div className="flex items-center justify-between border-t border-border pt-3 mt-3">
             <div className="flex items-center gap-1">
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+              <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={handleVideoSelect} />
               <Button variant="ghost" size="icon" className="h-9 w-9 text-primary" onClick={() => fileRef.current?.click()}>
                 <ImagePlus className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-primary" onClick={() => videoRef.current?.click()}>
+                <Video className="h-5 w-5" />
               </Button>
             </div>
             <div className="flex items-center gap-2">
@@ -275,7 +288,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
               </Button>
               <Button
                 className="rounded-full px-5 h-8 text-sm font-semibold"
-                disabled={(!content.trim() && !imageFile) || loading}
+                disabled={(!content.trim() && !imageFile && !videoFile) || loading}
                 onClick={handlePost}
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Post'}
