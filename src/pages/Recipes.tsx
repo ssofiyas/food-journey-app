@@ -402,6 +402,70 @@ export default function Recipes() {
                     </ol>
                   </div>
                 )}
+
+                {/* Action buttons */}
+                <div className="flex gap-2 pt-2 border-t border-border">
+                  {user && detailRecipe.user_id !== user.id && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl gap-1.5 flex-1"
+                      onClick={async () => {
+                        if (!user) return;
+                        try {
+                          const { error } = await supabase.from('recipes').insert({
+                            user_id: user.id,
+                            title: detailRecipe.title + ' (copy)',
+                            description: detailRecipe.description,
+                            prep_time: detailRecipe.prep_time,
+                            cook_time: detailRecipe.cook_time,
+                            difficulty: detailRecipe.difficulty,
+                            cuisine: detailRecipe.cuisine,
+                            meal_type: detailRecipe.meal_type,
+                            ingredients: detailRecipe.ingredients as any,
+                            instructions: detailRecipe.instructions as any,
+                            tags: detailRecipe.tags as any,
+                            image_url: detailRecipe.image_url,
+                          });
+                          if (error) throw error;
+                          toast({ title: 'Recipe copied to your library!' });
+                          fetchRecipes();
+                          setDetailRecipe(null);
+                        } catch (err: any) {
+                          toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                        }
+                      }}
+                    >
+                      <ChefHat className="h-3.5 w-3.5" /> Copy to My Recipes
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl gap-1.5 flex-1"
+                    onClick={async () => {
+                      if (!user) return;
+                      const items = detailRecipe.ingredients.map((ing: any) => ({
+                        name: `${ing.name} (${ing.amount} ${ing.unit})`,
+                        quantity: ing.amount || '1',
+                        checked: false,
+                        category: 'Ingredients',
+                      }));
+                      const { error } = await supabase.from('shopping_lists').insert({
+                        user_id: user.id,
+                        name: detailRecipe.title,
+                        items: items as any,
+                      });
+                      if (error) {
+                        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+                      } else {
+                        toast({ title: 'Added to shopping list!', description: `${items.length} ingredients from ${detailRecipe.title}` });
+                      }
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add to Shopping List
+                  </Button>
+                </div>
               </div>
             </>
           )}
