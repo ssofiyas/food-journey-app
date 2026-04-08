@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Recipes from "./pages/Recipes";
 import MealPlanner from "./pages/MealPlanner";
 import ShoppingList from "./pages/ShoppingList";
+import Feedback from "./pages/Feedback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/recipes" element={user ? <Recipes /> : <Navigate to="/login" replace />} />
         <Route path="/planner" element={user ? <MealPlanner /> : <Navigate to="/login" replace />} />
         <Route path="/shopping" element={user ? <ShoppingList /> : <Navigate to="/login" replace />} />
+        <Route path="/feedback" element={user ? <Feedback /> : <Navigate to="/login" replace />} />
         <Route path="/notifications" element={user ? <div className="flex-1 border-r border-border max-w-2xl"><div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-4 py-3"><h1 className="font-display text-xl font-bold text-foreground">Notifications</h1></div><div className="py-16 text-center"><p className="text-muted-foreground text-sm">No notifications yet</p></div></div> : <Navigate to="/login" replace />} />
         <Route path="/messages" element={user ? <div className="flex-1 border-r border-border max-w-2xl"><div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-4 py-3"><h1 className="font-display text-xl font-bold text-foreground">Messages</h1></div><div className="py-16 text-center"><p className="text-muted-foreground text-sm">No messages yet</p></div></div> : <Navigate to="/login" replace />} />
         <Route path="*" element={<NotFound />} />

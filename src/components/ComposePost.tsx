@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ImagePlus, X, User, ChefHat, Loader2, Plus } from 'lucide-react';
+import { ImagePlus, X, User, ChefHat, Loader2, Plus, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,8 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [isRecipe, setIsRecipe] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: '' }]);
   const [instructions, setInstructions] = useState<string[]>(['']);
@@ -33,6 +35,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
@@ -53,8 +56,26 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
     if (fileRef.current) fileRef.current.value = '';
   };
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: 'Video too large', description: 'Max 50MB', variant: 'destructive' });
+      return;
+    }
+    setVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+    removeImage();
+  };
+
+  const removeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview(null);
+    if (videoRef.current) videoRef.current.value = '';
+  };
+
   const handlePost = async () => {
-    if (!content.trim() && !imageFile) return;
+    if (!content.trim() && !imageFile && !videoFile) return;
     setLoading(true);
     try {
       let image_url: string | null = null;
@@ -63,6 +84,15 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
         const ext = imageFile.name.split('.').pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage.from('images').upload(path, imageFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('images').getPublicUrl(path);
+        image_url = urlData.publicUrl;
+      }
+
+      if (videoFile) {
+        const ext = videoFile.name.split('.').pop();
+        const path = `${user.id}/video_${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('images').upload(path, videoFile);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from('images').getPublicUrl(path);
         image_url = urlData.publicUrl;
@@ -85,6 +115,7 @@ export function ComposePost({ onPostCreated }: ComposePostProps) {
       if (error) throw error;
       setContent('');
       removeImage();
+      removeVideo();
       setIsRecipe(false);
       setIngredients([{ name: '', amount: '', unit: '' }]);
       setInstructions(['']);
