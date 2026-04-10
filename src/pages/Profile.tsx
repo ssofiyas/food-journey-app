@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, MapPin, Link as LinkIcon, User, Settings } from 'lucide-react';
+import { ArrowLeft, CalendarDays, MapPin, Link as LinkIcon, User, Settings, ChefHat, Heart, Bookmark } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -151,8 +151,8 @@ export default function Profile() {
   return (
     <div className="flex-1 max-w-2xl mx-auto pb-16 md:pb-0">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/70 backdrop-blur-xl px-4 py-2">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-9 w-9">
+      <div className="sticky top-0 z-10 flex items-center gap-4 glass-strong px-4 py-2">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-9 w-9 btn-bounce">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -201,9 +201,23 @@ export default function Profile() {
           <span className="flex items-center gap-1"><CalendarDays className="h-4 w-4" /> Joined {joinDate}</span>
         </div>
 
-        <div className="mt-3 flex items-center gap-4 text-sm">
-          <span className="text-foreground"><strong>{profile.following_count}</strong> <span className="text-muted-foreground">Following</span></span>
-          <span className="text-foreground"><strong>{profile.followers_count}</strong> <span className="text-muted-foreground">Followers</span></span>
+        {/* Bento Stats Grid */}
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          <div className="rounded-bento bg-gradient-to-br from-primary/10 to-primary/5 border border-border/50 p-4 text-center">
+            <ChefHat className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-xl font-bold font-display text-foreground">{posts.length}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">Recipes</p>
+          </div>
+          <div className="rounded-bento bg-gradient-to-br from-accent/10 to-accent/5 border border-border/50 p-4 text-center">
+            <Heart className="h-5 w-5 text-accent mx-auto mb-1" />
+            <p className="text-xl font-bold font-display text-foreground">{profile.followers_count}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">Followers</p>
+          </div>
+          <div className="rounded-bento bg-gradient-to-br from-primary/5 to-accent/10 border border-border/50 p-4 text-center">
+            <Bookmark className="h-5 w-5 text-primary mx-auto mb-1" />
+            <p className="text-xl font-bold font-display text-foreground">{profile.following_count}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">Following</p>
+          </div>
         </div>
       </div>
 

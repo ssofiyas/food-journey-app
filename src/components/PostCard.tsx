@@ -96,7 +96,7 @@ export function PostCard({ post, author, liked, saved, onLike, onSave, onDelete,
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleClick}
-        className="bg-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-card-hover shadow-card border border-border/50 group relative"
+        className="bg-card rounded-bento overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] shadow-card border border-border/50 group relative"
       >
         {/* Image */}
         {post.image_url && (

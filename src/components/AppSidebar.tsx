@@ -40,7 +40,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
+    <Sidebar collapsible="icon" className="border-r glass-strong">
       <SidebarContent className="pt-5">
         <div className={`flex items-center gap-2.5 px-4 pb-8 ${collapsed ? 'justify-center' : ''}`}>
           <div className="h-10 w-10 rounded-2xl gradient-hero flex items-center justify-center shrink-0 shadow-sm">
