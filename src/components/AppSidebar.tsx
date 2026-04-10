@@ -1,4 +1,4 @@
-import { Home, Search, User, ChefHat, CalendarDays, ListChecks, LogOut, MessageSquare } from 'lucide-react';
+import { Home, Search, User, ChefHat, CalendarDays, ListChecks, LogOut, MessageSquare, Info } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ const toolsNav = [
   { title: 'Planner', url: '/planner', icon: CalendarDays },
   { title: 'Shopping', url: '/shopping', icon: ListChecks },
   { title: 'Feedback', url: '/feedback', icon: MessageSquare },
+  { title: 'About Us', url: '/about', icon: Info },
 ];
 
 export function AppSidebar() {
