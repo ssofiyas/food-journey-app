@@ -58,7 +58,7 @@ export default function MealPlanner() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('profiles').select('daily_calorie_target').eq('user_id', user.id).single().then(({ data }) => {
+    supabase.from('user_health_data').select('daily_calorie_target').eq('user_id', user.id).single().then(({ data }) => {
       if (data && (data as any).daily_calorie_target) setDailyTarget((data as any).daily_calorie_target);
     });
   }, [user]);

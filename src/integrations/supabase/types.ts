@@ -266,7 +266,6 @@ export type Database = {
           banner_url: string | null
           bio: string | null
           created_at: string
-          daily_calorie_target: number | null
           followers_count: number | null
           following_count: number | null
           full_name: string | null
@@ -282,7 +281,6 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string
-          daily_calorie_target?: number | null
           followers_count?: number | null
           following_count?: number | null
           full_name?: string | null
@@ -298,7 +296,6 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           created_at?: string
-          daily_calorie_target?: number | null
           followers_count?: number | null
           following_count?: number | null
           full_name?: string | null
@@ -416,6 +413,30 @@ export type Database = {
           id?: string
           items?: Json
           name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_health_data: {
+        Row: {
+          created_at: string
+          daily_calorie_target: number | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_calorie_target?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_calorie_target?: number | null
+          id?: string
           updated_at?: string
           user_id?: string
         }
