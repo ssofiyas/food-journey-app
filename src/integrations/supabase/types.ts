@@ -442,6 +442,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding: {
+        Row: {
+          age_range: string | null
+          created_at: string
+          dietary_restrictions: string[] | null
+          food_preferences: string[] | null
+          goals: string[] | null
+          id: string
+          onboarding_completed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_range?: string | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          food_preferences?: string[] | null
+          goals?: string[] | null
+          id?: string
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_range?: string | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          food_preferences?: string[] | null
+          goals?: string[] | null
+          id?: string
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           id: string
