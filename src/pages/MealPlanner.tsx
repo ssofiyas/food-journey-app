@@ -185,6 +185,25 @@ export default function MealPlanner() {
     <div className="flex-1 border-r border-border max-w-2xl pb-16 md:pb-0">
       <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl px-4 py-3">
         <h1 className="font-display text-xl font-bold text-foreground">Meal Planner</h1>
+        {/* Custom daily target */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-xs text-muted-foreground">Daily goal:</span>
+          <Input
+            type="number"
+            value={dailyTarget}
+            onChange={e => {
+              const val = parseInt(e.target.value) || 2000;
+              setDailyTarget(val);
+              if (user) {
+                supabase.from('user_health_data').upsert({ user_id: user.id, daily_calorie_target: val } as any, { onConflict: 'user_id' });
+              }
+            }}
+            className="w-20 h-7 text-xs rounded-full text-center"
+            min={500}
+            max={10000}
+          />
+          <span className="text-xs text-muted-foreground">kcal</span>
+        </div>
         <div className="flex items-center justify-between mt-2">
           <Button variant="ghost" size="icon" onClick={() => nav(-1)}><ChevronLeft className="h-4 w-4" /></Button>
           <span className="font-display font-semibold text-foreground">
