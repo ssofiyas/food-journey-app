@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,14 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/i18n/LanguageContext';
+import type { Locale } from '@/i18n/translations';
 
 export default function Settings() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { locale, setLocale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     full_name: '',
@@ -86,6 +89,29 @@ export default function Settings() {
           <div>
             <p className="font-semibold text-foreground">{form.full_name || 'Your name'}</p>
             <p className="text-sm text-muted-foreground">{form.username ? `@${form.username}` : 'Set a username'}</p>
+          </div>
+        </div>
+
+        {/* Language selector */}
+        <div className="rounded-bento border border-border p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Globe className="h-4 w-4 text-primary" />
+            <Label className="font-display font-semibold">Language</Label>
+          </div>
+          <div className="flex gap-2">
+            {([{ value: 'en', label: 'English' }, { value: 'fi', label: 'Suomi' }] as const).map(lang => (
+              <button
+                key={lang.value}
+                onClick={() => setLocale(lang.value as Locale)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                  locale === lang.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
           </div>
         </div>
 
