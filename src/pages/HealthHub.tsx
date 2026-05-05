@@ -107,6 +107,11 @@ export default function HealthHub() {
               );
             })}
           </div>
+          {devices.find(d => d.device_type === 'fitbit') && (
+            <Button size="sm" className="rounded-full mt-3 w-full" onClick={syncFitbit}>
+              Sync Fitbit now
+            </Button>
+          )}
         </Card>
 
         {/* 7-day overview */}
