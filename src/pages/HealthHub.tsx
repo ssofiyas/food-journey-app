@@ -47,6 +47,20 @@ export default function HealthHub() {
     }
   };
 
+  const syncFitbit = async () => {
+    if (!user) return;
+    toast.loading('Syncing Fitbit…', { id: 'fitbit' });
+    const { data, error } = await supabase.functions.invoke('fitbit-sync');
+    if (error || (data as any)?.error) {
+      toast.error(`Fitbit sync failed: ${(data as any)?.error || error?.message}`, { id: 'fitbit' });
+      return;
+    }
+    const s = (data as any).synced;
+    toast.success(`Synced: ${s.steps} steps · ${s.sleepHours}h sleep${s.restingHR ? ` · ${s.restingHR} bpm` : ''}`, { id: 'fitbit' });
+    const { data: l } = await supabase.from('daily_health_logs' as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(7);
+    setLogs((l as any[]) || []);
+  };
+
   const logToday = async () => {
     if (!user) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -93,6 +107,11 @@ export default function HealthHub() {
               );
             })}
           </div>
+          {devices.find(d => d.device_type === 'fitbit') && (
+            <Button size="sm" className="rounded-full mt-3 w-full" onClick={syncFitbit}>
+              Sync Fitbit now
+            </Button>
+          )}
         </Card>
 
         {/* 7-day overview */}
