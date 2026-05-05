@@ -1,8 +1,7 @@
-import { Home, Search, Plus, CalendarDays, User } from 'lucide-react';
+import { Home, Search, Plus, HeartPulse, GraduationCap } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 
-import { HeartPulse, GraduationCap } from 'lucide-react';
 
 const navItems = [
   { to: '/home', icon: Home, label: 'Home' },
