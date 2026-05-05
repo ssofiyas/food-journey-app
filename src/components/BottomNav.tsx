@@ -1,12 +1,13 @@
-import { Home, Search, Plus, CalendarDays, User } from 'lucide-react';
+import { Home, Search, Plus, HeartPulse, GraduationCap } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 
+
 const navItems = [
-  { to: '/feed', icon: Home, label: 'Home' },
+  { to: '/home', icon: Home, label: 'Home' },
   { to: '/explore', icon: Search, label: 'Explore' },
-  { to: '/planner', icon: CalendarDays, label: 'Planner' },
-  { to: '/profile', icon: User, label: 'Profile' },
+  { to: '/health-hub', icon: HeartPulse, label: 'Health' },
+  { to: '/academy', icon: GraduationCap, label: 'Learn' },
 ];
 
 export function BottomNav() {
