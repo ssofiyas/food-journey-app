@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_lectures: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          instructor: string | null
+          is_premium: boolean | null
+          level: string | null
+          thumbnail_url: string | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor?: string | null
+          is_premium?: boolean | null
+          level?: string | null
+          thumbnail_url?: string | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor?: string | null
+          is_premium?: boolean | null
+          level?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -45,6 +87,159 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      connected_devices: {
+        Row: {
+          created_at: string
+          device_name: string | null
+          device_type: string
+          id: string
+          is_connected: boolean | null
+          last_synced_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_name?: string | null
+          device_type: string
+          id?: string
+          is_connected?: boolean | null
+          last_synced_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string | null
+          device_type?: string
+          id?: string
+          is_connected?: boolean | null
+          last_synced_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cycle_logs: {
+        Row: {
+          created_at: string
+          date: string
+          flow: string | null
+          id: string
+          notes: string | null
+          phase: string | null
+          symptoms: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          flow?: string | null
+          id?: string
+          notes?: string | null
+          phase?: string | null
+          symptoms?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          flow?: string | null
+          id?: string
+          notes?: string | null
+          phase?: string | null
+          symptoms?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_health_logs: {
+        Row: {
+          calories_consumed: number | null
+          created_at: string
+          date: string
+          id: string
+          mood: string | null
+          notes: string | null
+          readiness_score: number | null
+          resting_heart_rate: number | null
+          sleep_hours: number | null
+          steps: number | null
+          stress_level: number | null
+          updated_at: string
+          user_id: string
+          water_glasses: number | null
+        }
+        Insert: {
+          calories_consumed?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          readiness_score?: number | null
+          resting_heart_rate?: number | null
+          sleep_hours?: number | null
+          steps?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id: string
+          water_glasses?: number | null
+        }
+        Update: {
+          calories_consumed?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          readiness_score?: number | null
+          resting_heart_rate?: number | null
+          sleep_hours?: number | null
+          steps?: number | null
+          stress_level?: number | null
+          updated_at?: string
+          user_id?: string
+          water_glasses?: number | null
+        }
+        Relationships: []
+      }
+      day_plan_activities: {
+        Row: {
+          activity_type: string | null
+          completed: boolean | null
+          created_at: string
+          date: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          scheduled_time: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          activity_type?: string | null
+          completed?: boolean | null
+          created_at?: string
+          date?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          scheduled_time?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string | null
+          completed?: boolean | null
+          created_at?: string
+          date?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          scheduled_time?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       feedback: {
         Row: {
@@ -97,6 +292,33 @@ export type Database = {
           follower_id?: string
           following_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      lecture_progress: {
+        Row: {
+          completed: boolean | null
+          id: string
+          last_watched_at: string
+          lecture_id: string
+          progress_percent: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          last_watched_at?: string
+          lecture_id: string
+          progress_percent?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          last_watched_at?: string
+          lecture_id?: string
+          progress_percent?: number | null
+          user_id?: string
         }
         Relationships: []
       }
