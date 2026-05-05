@@ -1,4 +1,4 @@
-import { Home, Search, User, ChefHat, CalendarDays, ListChecks, LogOut, MessageSquare, Info } from 'lucide-react';
+import { Home, Search, User, ChefHat, CalendarDays, ListChecks, LogOut, MessageSquare, Info, HeartPulse, GraduationCap, Users } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,15 @@ import {
 } from '@/components/ui/sidebar';
 
 const mainNav = [
-  { title: 'Home', url: '/feed', icon: Home },
+  { title: 'Home', url: '/home', icon: Home },
   { title: 'Explore', url: '/explore', icon: Search },
+  { title: 'Feed', url: '/feed', icon: Users },
   { title: 'Profile', url: '/profile', icon: User },
 ];
 
 const toolsNav = [
+  { title: 'Health Hub', url: '/health-hub', icon: HeartPulse },
+  { title: 'Academy', url: '/academy', icon: GraduationCap },
   { title: 'Recipes', url: '/recipes', icon: ChefHat },
   { title: 'Planner', url: '/planner', icon: CalendarDays },
   { title: 'Shopping', url: '/shopping', icon: ListChecks },
