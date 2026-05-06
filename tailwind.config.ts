@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Space Grotesk", "system-ui", "sans-serif"],
-        body: ["DM Sans", "system-ui", "sans-serif"],
-        editorial: ["Inter Tight", "system-ui", "sans-serif"],
+        display: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "Inter Tight", "system-ui", "sans-serif"],
+        body: ["-apple-system", "BlinkMacSystemFont", "SF Pro Text", "Inter Tight", "system-ui", "sans-serif"],
+        editorial: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "Inter Tight", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
