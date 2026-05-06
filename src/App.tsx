@@ -24,6 +24,7 @@ import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import HealthHub from "./pages/HealthHub";
 import Academy from "./pages/Academy";
+import Kitchen from "./pages/Kitchen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,7 @@ function AppRoutes() {
           <Route path="/home" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
           <Route path="/health-hub" element={user ? <HealthHub /> : <Navigate to="/login" replace />} />
           <Route path="/academy" element={user ? <Academy /> : <Navigate to="/login" replace />} />
+          <Route path="/kitchen" element={user ? <Kitchen /> : <Navigate to="/login" replace />} />
           <Route path="/feed" element={user ? <Feed /> : <Navigate to="/login" replace />} />
           <Route path="/explore" element={user ? <Explore /> : <Navigate to="/login" replace />} />
           <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
