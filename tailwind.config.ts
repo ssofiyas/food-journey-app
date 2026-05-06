@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "Inter Tight", "system-ui", "sans-serif"],
-        body: ["-apple-system", "BlinkMacSystemFont", "SF Pro Text", "Inter Tight", "system-ui", "sans-serif"],
-        editorial: ["-apple-system", "BlinkMacSystemFont", "SF Pro Display", "Inter Tight", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+        body: ["Inter", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+        editorial: ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -55,6 +55,7 @@ export default {
         pink: "hsl(var(--pink))",
         lilac: "hsl(var(--lilac))",
         lime: "hsl(var(--lime))",
+        peach: "hsl(var(--peach))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
