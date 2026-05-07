@@ -1,4 +1,4 @@
-import { Home, Compass, User, ChefHat, CalendarDays, ListChecks, LogOut, MessageSquare, Info, HeartPulse, GraduationCap, Users, BookOpen } from 'lucide-react';
+import { Home, Compass, User, ChefHat, CalendarDays, ListChecks, LogOut, MessageSquare, Info, HeartPulse, GraduationCap, Users, BookOpen, Settings as SettingsIcon, LayoutGrid } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -17,20 +17,22 @@ import {
 
 const mainNav = [
   { title: 'Home', url: '/home', icon: Home },
-  { title: 'Health', url: '/health-hub', icon: HeartPulse },
+  { title: 'Feed', url: '/feed', icon: Users },
   { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
-  { title: 'Explore', url: '/explore', icon: Compass },
-  { title: 'Academy', url: '/academy', icon: GraduationCap },
-  { title: 'Profile', url: '/profile', icon: User },
+  { title: 'Recipes', url: '/recipes', icon: BookOpen },
+  { title: 'Tools', url: '/tools', icon: LayoutGrid },
 ];
 
 const toolsNav = [
-  { title: 'Feed', url: '/feed', icon: Users },
-  { title: 'Recipes', url: '/recipes', icon: BookOpen },
+  { title: 'Profile', url: '/profile', icon: User },
+  { title: 'Health', url: '/health-hub', icon: HeartPulse },
+  { title: 'Academy', url: '/academy', icon: GraduationCap },
+  { title: 'Explore', url: '/explore', icon: Compass },
   { title: 'Planner', url: '/planner', icon: CalendarDays },
   { title: 'Shopping', url: '/shopping', icon: ListChecks },
+  { title: 'Settings', url: '/settings', icon: SettingsIcon },
   { title: 'Feedback', url: '/feedback', icon: MessageSquare },
-  { title: 'About Us', url: '/about', icon: Info },
+  { title: 'About', url: '/about', icon: Info },
 ];
 
 export function AppSidebar() {
