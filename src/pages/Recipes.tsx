@@ -206,9 +206,18 @@ export default function Recipes() {
     <div className="flex-1 max-w-2xl mx-auto pb-20 md:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h1 className="font-display text-xl font-bold text-foreground">Recipes</h1>
           {user && (
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full gap-1.5 h-9"
+                onClick={() => { setDiscoverOpen(true); if (discoverResults.length === 0) searchMealDB('chicken'); }}
+              >
+                <Sparkles className="h-4 w-4" /> Discover
+              </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="rounded-full gap-1.5 h-9">
