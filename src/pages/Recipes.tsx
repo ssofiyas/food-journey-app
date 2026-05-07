@@ -578,6 +578,53 @@ export default function Recipes() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Discover (TheMealDB) Dialog */}
+      <Dialog open={discoverOpen} onOpenChange={setDiscoverOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" /> Discover Recipes
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">Browse free recipes from TheMealDB and import to your library.</p>
+          </DialogHeader>
+          <div className="flex gap-2 mt-2">
+            <Input
+              placeholder="Search e.g. pasta, curry, salmon..."
+              value={discoverQuery}
+              onChange={e => setDiscoverQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') searchMealDB(discoverQuery); }}
+              className="rounded-xl"
+            />
+            <Button onClick={() => searchMealDB(discoverQuery)} disabled={discovering} className="rounded-xl">
+              {discovering ? '...' : 'Search'}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            {discoverResults.map((meal: any) => (
+              <div key={meal.idMeal} className="rounded-2xl border border-border overflow-hidden bg-card">
+                <img src={meal.strMealThumb} alt={meal.strMeal} className="w-full aspect-square object-cover" />
+                <div className="p-2.5">
+                  <p className="text-xs font-display font-bold line-clamp-2 leading-tight">{meal.strMeal}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{meal.strArea} · {meal.strCategory}</p>
+                  <Button
+                    size="sm"
+                    className="w-full mt-2 rounded-lg h-8 text-xs gap-1"
+                    onClick={() => importMealDB(meal)}
+                    disabled={importingId === meal.idMeal}
+                  >
+                    <Download className="h-3 w-3" />
+                    {importingId === meal.idMeal ? 'Importing...' : 'Import'}
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {!discovering && discoverResults.length === 0 && (
+              <p className="col-span-2 text-center text-sm text-muted-foreground py-8">No results. Try another search.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
