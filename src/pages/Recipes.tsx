@@ -466,6 +466,22 @@ export default function Recipes() {
                   {detailRecipe.cuisine && <Badge variant="outline">{detailRecipe.cuisine}</Badge>}
                 </div>
 
+                {(() => {
+                  const ytId = getRecipeYouTubeId(detailRecipe);
+                  if (!ytId) return null;
+                  return (
+                    <div className="rounded-2xl overflow-hidden border border-border aspect-video">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${ytId}`}
+                        title="Recipe video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
+                  );
+                })()}
+
                 {detailRecipe.ingredients && detailRecipe.ingredients.length > 0 && (
                   <div className="rounded-2xl bg-muted/50 p-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Ingredients</h3>
