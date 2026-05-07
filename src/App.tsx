@@ -85,6 +85,7 @@ function AppRoutes() {
           <Route path="/health-hub" element={user ? <HealthHub /> : <Navigate to="/login" replace />} />
           <Route path="/academy" element={user ? <Academy /> : <Navigate to="/login" replace />} />
           <Route path="/kitchen" element={user ? <Kitchen /> : <Navigate to="/login" replace />} />
+          <Route path="/tools" element={user ? <Tools /> : <Navigate to="/login" replace />} />
           <Route path="/feed" element={user ? <Feed /> : <Navigate to="/login" replace />} />
           <Route path="/explore" element={user ? <Explore /> : <Navigate to="/login" replace />} />
           <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
