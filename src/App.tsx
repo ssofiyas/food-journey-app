@@ -26,6 +26,7 @@ import HealthHub from "./pages/HealthHub";
 import Academy from "./pages/Academy";
 import Kitchen from "./pages/Kitchen";
 import ResetPassword from "./pages/ResetPassword";
+import Tools from "./pages/Tools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
