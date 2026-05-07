@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Clock, ChefHat, Search, X, ChevronRight } from 'lucide-react';
+import { Plus, Clock, ChefHat, Search, X, ChevronRight, Download, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
