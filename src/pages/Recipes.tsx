@@ -366,6 +366,7 @@ export default function Recipes() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           )}
         </div>
 
