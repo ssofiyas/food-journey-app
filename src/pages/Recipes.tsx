@@ -65,6 +65,87 @@ export default function Recipes() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: 'g' }]);
   const [instructions, setInstructions] = useState<string[]>(['']);
   const [ingredientSearch, setIngredientSearch] = useState<number | null>(null);
+  const [discoverOpen, setDiscoverOpen] = useState(false);
+  const [discoverQuery, setDiscoverQuery] = useState('');
+  const [discoverResults, setDiscoverResults] = useState<any[]>([]);
+  const [discovering, setDiscovering] = useState(false);
+  const [importingId, setImportingId] = useState<string | null>(null);
+
+  const extractYouTubeId = (text: string | null | undefined): string | null => {
+    if (!text) return null;
+    const m = String(text).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
+
+  const getRecipeYouTubeId = (r: Recipe): string | null => {
+    const sources = [r.description || '', ...(r.instructions || [])];
+    for (const s of sources) {
+      const id = extractYouTubeId(s);
+      if (id) return id;
+    }
+    return null;
+  };
+
+  const searchMealDB = async (q: string) => {
+    setDiscovering(true);
+    try {
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      setDiscoverResults(json.meals || []);
+    } catch (err: any) {
+      toast({ title: 'Search failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const importMealDB = async (meal: any) => {
+    if (!user) return;
+    setImportingId(meal.idMeal);
+    try {
+      const ings: Ingredient[] = [];
+      for (let i = 1; i <= 20; i++) {
+        const name = meal[`strIngredient${i}`];
+        const measure = meal[`strMeasure${i}`];
+        if (name && name.trim()) {
+          const measureStr = (measure || '').trim();
+          const match = measureStr.match(/^([\d./\s]+)?\s*(\w+)?$/);
+          ings.push({
+            name: name.trim(),
+            amount: match?.[1]?.trim() || measureStr || '1',
+            unit: match?.[2] || 'pcs',
+          });
+        }
+      }
+      const steps = (meal.strInstructions || '')
+        .split(/\r?\n+/)
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      if (meal.strYoutube) steps.push(`Watch the video: ${meal.strYoutube}`);
+
+      const { error } = await supabase.from('recipes').insert({
+        user_id: user.id,
+        title: meal.strMeal,
+        description: meal.strArea ? `${meal.strArea} ${meal.strCategory || ''}`.trim() : null,
+        prep_time: 10,
+        cook_time: 25,
+        difficulty: 'Medium',
+        cuisine: meal.strArea || null,
+        meal_type: 'Dinner',
+        ingredients: ings as any,
+        instructions: steps as any,
+        image_url: meal.strMealThumb,
+        tags: meal.strTags ? meal.strTags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+      });
+      if (error) throw error;
+      toast({ title: 'Recipe imported!', description: meal.strMeal });
+      fetchRecipes();
+    } catch (err: any) {
+      toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setImportingId(null);
+    }
+  };
 
   const fetchRecipes = async () => {
     const { data } = await supabase.from('recipes').select('*').order('created_at', { ascending: false });
