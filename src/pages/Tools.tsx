@@ -11,12 +11,12 @@ import { Button } from '@/components/ui/button';
 const tiles = [
   { to: '/profile', icon: User, label: 'Profile', desc: 'Posts, followers, bio', tone: 'from-primary/20 to-primary/5' },
   { to: '/health-hub', icon: HeartPulse, label: 'Health', desc: 'Sleep, mood, readiness', tone: 'from-accent/20 to-accent/5' },
-  { to: '/academy', icon: GraduationCap, label: 'Academy', desc: 'Lectures & courses', tone: 'from-peach-200/40 to-peach-200/10' },
+  { to: '/academy', icon: GraduationCap, label: 'Academy', desc: 'Lectures & courses', tone: 'from-peach/40 to-peach/10' },
   { to: '/explore', icon: Compass, label: 'Explore', desc: 'Discover recipes & tags', tone: 'from-primary/15 to-accent/10' },
   { to: '/planner', icon: CalendarDays, label: 'Meal Planner', desc: '7-day calendar', tone: 'from-accent/15 to-primary/10' },
-  { to: '/shopping', icon: ListChecks, label: 'Shopping', desc: 'Smart lists & AI', tone: 'from-primary/20 to-peach-200/15' },
+  { to: '/shopping', icon: ListChecks, label: 'Shopping', desc: 'Smart lists & AI', tone: 'from-primary/20 to-peach/15' },
   { to: '/settings', icon: SettingsIcon, label: 'Settings', desc: 'Language, account', tone: 'from-muted/60 to-muted/20' },
-  { to: '/feedback', icon: MessageSquare, label: 'Feedback', desc: 'Report or suggest', tone: 'from-accent/15 to-peach-200/10' },
+  { to: '/feedback', icon: MessageSquare, label: 'Feedback', desc: 'Report or suggest', tone: 'from-accent/15 to-peach/10' },
   { to: '/about', icon: Info, label: 'About', desc: 'Our story', tone: 'from-primary/10 to-accent/10' },
 ];
 
