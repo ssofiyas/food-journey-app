@@ -1,15 +1,14 @@
-import { Home, HeartPulse, Compass, GraduationCap, User, ChefHat } from 'lucide-react';
+import { Home, Users, BookOpen, LayoutGrid, ChefHat } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 const leftItems = [
   { to: '/home', icon: Home, label: 'Home' },
-  { to: '/health-hub', icon: HeartPulse, label: 'Health' },
+  { to: '/feed', icon: Users, label: 'Feed' },
 ];
 
 const rightItems = [
-  { to: '/explore', icon: Compass, label: 'Explore' },
-  { to: '/academy', icon: GraduationCap, label: 'Academy' },
-  { to: '/profile', icon: User, label: 'Profile' },
+  { to: '/recipes', icon: BookOpen, label: 'Recipes' },
+  { to: '/tools', icon: LayoutGrid, label: 'Tools' },
 ];
 
 export function BottomNav() {

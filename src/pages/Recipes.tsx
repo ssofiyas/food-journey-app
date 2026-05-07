@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Clock, ChefHat, Search, X, ChevronRight } from 'lucide-react';
+import { Plus, Clock, ChefHat, Search, X, ChevronRight, Download, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,87 @@ export default function Recipes() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: 'g' }]);
   const [instructions, setInstructions] = useState<string[]>(['']);
   const [ingredientSearch, setIngredientSearch] = useState<number | null>(null);
+  const [discoverOpen, setDiscoverOpen] = useState(false);
+  const [discoverQuery, setDiscoverQuery] = useState('');
+  const [discoverResults, setDiscoverResults] = useState<any[]>([]);
+  const [discovering, setDiscovering] = useState(false);
+  const [importingId, setImportingId] = useState<string | null>(null);
+
+  const extractYouTubeId = (text: string | null | undefined): string | null => {
+    if (!text) return null;
+    const m = String(text).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
+
+  const getRecipeYouTubeId = (r: Recipe): string | null => {
+    const sources = [r.description || '', ...(r.instructions || [])];
+    for (const s of sources) {
+      const id = extractYouTubeId(s);
+      if (id) return id;
+    }
+    return null;
+  };
+
+  const searchMealDB = async (q: string) => {
+    setDiscovering(true);
+    try {
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      setDiscoverResults(json.meals || []);
+    } catch (err: any) {
+      toast({ title: 'Search failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const importMealDB = async (meal: any) => {
+    if (!user) return;
+    setImportingId(meal.idMeal);
+    try {
+      const ings: Ingredient[] = [];
+      for (let i = 1; i <= 20; i++) {
+        const name = meal[`strIngredient${i}`];
+        const measure = meal[`strMeasure${i}`];
+        if (name && name.trim()) {
+          const measureStr = (measure || '').trim();
+          const match = measureStr.match(/^([\d./\s]+)?\s*(\w+)?$/);
+          ings.push({
+            name: name.trim(),
+            amount: match?.[1]?.trim() || measureStr || '1',
+            unit: match?.[2] || 'pcs',
+          });
+        }
+      }
+      const steps = (meal.strInstructions || '')
+        .split(/\r?\n+/)
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      if (meal.strYoutube) steps.push(`Watch the video: ${meal.strYoutube}`);
+
+      const { error } = await supabase.from('recipes').insert({
+        user_id: user.id,
+        title: meal.strMeal,
+        description: meal.strArea ? `${meal.strArea} ${meal.strCategory || ''}`.trim() : null,
+        prep_time: 10,
+        cook_time: 25,
+        difficulty: 'Medium',
+        cuisine: meal.strArea || null,
+        meal_type: 'Dinner',
+        ingredients: ings as any,
+        instructions: steps as any,
+        image_url: meal.strMealThumb,
+        tags: meal.strTags ? meal.strTags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+      });
+      if (error) throw error;
+      toast({ title: 'Recipe imported!', description: meal.strMeal });
+      fetchRecipes();
+    } catch (err: any) {
+      toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setImportingId(null);
+    }
+  };
 
   const fetchRecipes = async () => {
     const { data } = await supabase.from('recipes').select('*').order('created_at', { ascending: false });
@@ -125,9 +206,18 @@ export default function Recipes() {
     <div className="flex-1 max-w-2xl mx-auto pb-20 md:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h1 className="font-display text-xl font-bold text-foreground">Recipes</h1>
           {user && (
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full gap-1.5 h-9"
+                onClick={() => { setDiscoverOpen(true); if (discoverResults.length === 0) searchMealDB('chicken'); }}
+              >
+                <Sparkles className="h-4 w-4" /> Discover
+              </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="rounded-full gap-1.5 h-9">
@@ -276,6 +366,7 @@ export default function Recipes() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           )}
         </div>
 
@@ -375,6 +466,22 @@ export default function Recipes() {
                   {detailRecipe.cuisine && <Badge variant="outline">{detailRecipe.cuisine}</Badge>}
                 </div>
 
+                {(() => {
+                  const ytId = getRecipeYouTubeId(detailRecipe);
+                  if (!ytId) return null;
+                  return (
+                    <div className="rounded-2xl overflow-hidden border border-border aspect-video">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${ytId}`}
+                        title="Recipe video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
+                  );
+                })()}
+
                 {detailRecipe.ingredients && detailRecipe.ingredients.length > 0 && (
                   <div className="rounded-2xl bg-muted/50 p-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Ingredients</h3>
@@ -469,6 +576,53 @@ export default function Recipes() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Discover (TheMealDB) Dialog */}
+      <Dialog open={discoverOpen} onOpenChange={setDiscoverOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" /> Discover Recipes
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">Browse free recipes from TheMealDB and import to your library.</p>
+          </DialogHeader>
+          <div className="flex gap-2 mt-2">
+            <Input
+              placeholder="Search e.g. pasta, curry, salmon..."
+              value={discoverQuery}
+              onChange={e => setDiscoverQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') searchMealDB(discoverQuery); }}
+              className="rounded-xl"
+            />
+            <Button onClick={() => searchMealDB(discoverQuery)} disabled={discovering} className="rounded-xl">
+              {discovering ? '...' : 'Search'}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            {discoverResults.map((meal: any) => (
+              <div key={meal.idMeal} className="rounded-2xl border border-border overflow-hidden bg-card">
+                <img src={meal.strMealThumb} alt={meal.strMeal} className="w-full aspect-square object-cover" />
+                <div className="p-2.5">
+                  <p className="text-xs font-display font-bold line-clamp-2 leading-tight">{meal.strMeal}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{meal.strArea} · {meal.strCategory}</p>
+                  <Button
+                    size="sm"
+                    className="w-full mt-2 rounded-lg h-8 text-xs gap-1"
+                    onClick={() => importMealDB(meal)}
+                    disabled={importingId === meal.idMeal}
+                  >
+                    <Download className="h-3 w-3" />
+                    {importingId === meal.idMeal ? 'Importing...' : 'Import'}
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {!discovering && discoverResults.length === 0 && (
+              <p className="col-span-2 text-center text-sm text-muted-foreground py-8">No results. Try another search.</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
