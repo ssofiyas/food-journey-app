@@ -153,7 +153,19 @@ export default function Recipes() {
     setLoading(false);
   };
 
+  const [inlineDiscover, setInlineDiscover] = useState<any[]>([]);
+
   useEffect(() => { fetchRecipes(); }, []);
+
+  useEffect(() => {
+    // Auto-load a curated mix from TheMealDB so the Discover row is always populated
+    const seeds = ['chicken', 'pasta', 'beef', 'salmon'];
+    const seed = seeds[Math.floor(Math.random() * seeds.length)];
+    fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${seed}`)
+      .then(r => r.json())
+      .then(j => setInlineDiscover((j.meals || []).slice(0, 12)))
+      .catch(() => {});
+  }, []);
 
   const resetForm = () => {
     setForm({ title: '', description: '', prep_time: 10, cook_time: 15, difficulty: 'Easy', cuisine: '', meal_type: 'Dinner' });
