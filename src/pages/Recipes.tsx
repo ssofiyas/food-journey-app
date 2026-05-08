@@ -411,7 +411,47 @@ export default function Recipes() {
         </div>
       </div>
 
-      {/* Recipe grid */}
+      {/* Inline Discover row — TheMealDB */}
+      {inlineDiscover.length > 0 && (
+        <div className="px-3 pt-4">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <h2 className="font-display font-bold text-sm flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-primary" /> Discover from the world
+            </h2>
+            <button
+              onClick={() => { setDiscoverOpen(true); if (discoverResults.length === 0) searchMealDB('chicken'); }}
+              className="text-[11px] font-semibold text-primary"
+            >
+              See all
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+            {inlineDiscover.map((meal: any) => (
+              <div
+                key={meal.idMeal}
+                className="shrink-0 w-40 bg-card rounded-2xl border border-border/50 shadow-card overflow-hidden"
+              >
+                <img src={meal.strMealThumb} alt={meal.strMeal} className="w-full aspect-square object-cover" />
+                <div className="p-2.5">
+                  <p className="font-display font-bold text-xs line-clamp-2 leading-tight">{meal.strMeal}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{meal.strArea}</p>
+                  {user && (
+                    <Button
+                      size="sm"
+                      onClick={() => importMealDB(meal)}
+                      disabled={importingId === meal.idMeal}
+                      className="w-full h-7 mt-2 rounded-lg text-[10px] gradient-primary text-primary-foreground"
+                    >
+                      {importingId === meal.idMeal ? '...' : <><Download className="h-3 w-3 mr-1" /> Save</>}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
