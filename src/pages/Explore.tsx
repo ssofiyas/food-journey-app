@@ -101,8 +101,8 @@ export default function Explore() {
 
   if (loading) {
     return (
-      <div className="flex-1 max-w-2xl pb-16 md:pb-0">
-        <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl px-4 py-3">
+      <div className="flex-1 w-full max-w-2xl mx-auto pb-24 md:pb-0">
+        <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl px-3 sm:px-4 py-3">
           <h1 className="font-display text-xl font-bold text-foreground">Explore</h1>
         </div>
         {/* Skeleton grid */}
@@ -116,9 +116,9 @@ export default function Explore() {
   }
 
   return (
-    <div className="flex-1 max-w-2xl pb-16 md:pb-0">
+    <div className="flex-1 w-full max-w-2xl mx-auto pb-24 md:pb-0">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl px-4 py-3 space-y-3">
+      <div className="sticky top-0 z-10 border-b border-border bg-background/70 backdrop-blur-xl px-3 sm:px-4 py-3 space-y-3">
         <h1 className="font-display text-xl font-bold text-foreground">Explore</h1>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

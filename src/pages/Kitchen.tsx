@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChefHat, Sparkles, Search, Refrigerator, ShoppingBasket, CalendarDays, Loader2, Plus } from 'lucide-react';
+import { ChefHat, Sparkles, Search, Refrigerator, ShoppingBasket, CalendarDays, Loader2, Plus, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -111,17 +111,32 @@ export default function Kitchen() {
 
             {scanResult && (
               <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="mt-5 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-                <p className="font-display font-bold text-base mb-2">{scanResult.meal_name || 'Scanned meal'}</p>
-                <div className="grid grid-cols-4 gap-2 text-center mb-4">
-                  {[
-                    { label: 'kcal', val: Math.round(scanResult.calories) },
-                    { label: 'P', val: `${Math.round(scanResult.protein)}g` },
-                    { label: 'C', val: `${Math.round(scanResult.carbs)}g` },
-                    { label: 'F', val: `${Math.round(scanResult.fat)}g` },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl bg-card/60 py-2">
-                      <p className="font-display text-base font-bold text-foreground">{s.val}</p>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">AI estimate — edit if needed</p>
+                </div>
+                <Input
+                  value={scanResult.meal_name || ''}
+                  onChange={(e) => setScanResult({ ...scanResult, meal_name: e.target.value })}
+                  placeholder="Meal name"
+                  className="font-display font-bold text-base mb-3 rounded-xl"
+                />
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {([
+                    { label: 'kcal', key: 'calories' as const, step: 10 },
+                    { label: 'P (g)', key: 'protein' as const, step: 1 },
+                    { label: 'C (g)', key: 'carbs' as const, step: 1 },
+                    { label: 'F (g)', key: 'fat' as const, step: 1 },
+                  ]).map((s) => (
+                    <div key={s.label} className="rounded-xl bg-card/60 p-2">
+                      <input
+                        type="number"
+                        step={s.step}
+                        value={Math.round(scanResult[s.key] as number)}
+                        onChange={(e) => setScanResult({ ...scanResult, [s.key]: Number(e.target.value) || 0 })}
+                        className="w-full bg-transparent text-center font-display text-base font-bold text-foreground outline-none focus:text-primary"
+                      />
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground text-center">{s.label}</p>
                     </div>
                   ))}
                 </div>
