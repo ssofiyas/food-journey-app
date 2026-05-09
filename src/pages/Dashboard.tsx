@@ -84,26 +84,28 @@ export default function Dashboard() {
     setMeals((data as MealLog[]) || []);
   };
 
+  const loadHealth = async (uid: string) => {
+    const [{ data: dlog }, { data: target }, { data: acts }] = await Promise.all([
+      supabase.from('daily_health_logs' as any).select('*').eq('user_id', uid).eq('date', today()).maybeSingle(),
+      supabase.from('user_health_data').select('daily_calorie_target').eq('user_id', uid).maybeSingle(),
+      supabase.from('day_plan_activities' as any).select('*').eq('user_id', uid).eq('date', today()).order('scheduled_time', { ascending: true }),
+    ]);
+    if (dlog) setLog(dlog as any);
+    if (target?.daily_calorie_target) setCalorieTarget(target.daily_calorie_target);
+    setActivities((acts as any[]) || []);
+  };
+
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const [{ data: dlog }, { data: target }, { data: acts }] = await Promise.all([
-        supabase.from('daily_health_logs' as any).select('*').eq('user_id', user.id).eq('date', today()).maybeSingle(),
-        supabase.from('user_health_data').select('daily_calorie_target').eq('user_id', user.id).maybeSingle(),
-        supabase.from('day_plan_activities' as any).select('*').eq('user_id', user.id).eq('date', today()).order('scheduled_time', { ascending: true }),
-      ]);
-      if (dlog) setLog(dlog as any);
-      if (target?.daily_calorie_target) setCalorieTarget(target.daily_calorie_target);
-      setActivities((acts as any[]) || []);
-      loadMeals(user.id);
-    })();
+    loadHealth(user.id);
+    loadMeals(user.id);
 
-    // Realtime: meal_plans changes for today
+    // Realtime: meal_plans + daily_health_logs + activities for today
     const channel = supabase
-      .channel(`meals-today-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_plans', filter: `user_id=eq.${user.id}` }, () => {
-        loadMeals(user.id);
-      })
+      .channel(`home-live-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_plans', filter: `user_id=eq.${user.id}` }, () => loadMeals(user.id))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_health_logs', filter: `user_id=eq.${user.id}` }, () => loadHealth(user.id))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_plan_activities', filter: `user_id=eq.${user.id}` }, () => loadHealth(user.id))
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
