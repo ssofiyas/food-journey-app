@@ -1,9 +1,9 @@
-import { Home, Users, BookOpen, LayoutGrid, Plus } from 'lucide-react';
+import { Home, Compass, BookOpen, LayoutGrid, Plus } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 const leftItems = [
   { to: '/home', icon: Home, label: 'Home' },
-  { to: '/feed', icon: Users, label: 'Feed' },
+  { to: '/explore', icon: Compass, label: 'Explore' },
 ];
 
 const rightItems = [
