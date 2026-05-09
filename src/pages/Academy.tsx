@@ -92,30 +92,94 @@ export default function Academy() {
       </div>
 
       <div className="p-5 grid sm:grid-cols-2 gap-4">
-        {filtered.map(l => (
-          <Card key={l.id} className="rounded-3xl overflow-hidden border-border/50 hover:shadow-lg transition-all cursor-pointer group" onClick={() => l.is_premium ? toast.info('Premium lecture — upgrade to watch') : toast.success(`Playing: ${l.title}`)}>
-            <div className="relative aspect-video bg-gradient-to-br from-primary/20 via-lilac/20 to-pink/20 flex items-center justify-center">
-              <div className="h-14 w-14 rounded-full bg-background/80 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-transform">
-                {l.is_premium ? <Lock className="h-6 w-6 text-foreground" /> : <Play className="h-6 w-6 text-primary fill-primary" />}
+        {filtered.map(l => {
+          const thumb = l.thumbnail_url;
+          return (
+            <Card key={l.id} className="rounded-3xl overflow-hidden border-border/50 hover:shadow-lg transition-all cursor-pointer group" onClick={() => l.is_premium ? toast.info('Premium lecture — upgrade to watch') : setPlaying(l)}>
+              <div className="relative aspect-video bg-gradient-to-br from-primary/20 via-lilac/20 to-pink/20 flex items-center justify-center overflow-hidden">
+                {thumb && <img src={thumb} alt={l.title} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />}
+                <div className="relative h-14 w-14 rounded-full bg-background/80 backdrop-blur flex items-center justify-center group-hover:scale-110 transition-transform z-10">
+                  {l.is_premium ? <Lock className="h-6 w-6 text-foreground" /> : <Play className="h-6 w-6 text-primary fill-primary" />}
+                </div>
+                {l.is_premium && (
+                  <span className="absolute top-3 right-3 z-10 text-[10px] font-bold px-2 py-1 rounded-full bg-foreground text-background">PREMIUM</span>
+                )}
               </div>
-              {l.is_premium && (
-                <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-1 rounded-full bg-foreground text-background">PREMIUM</span>
+              <div className="p-4">
+                <p className="text-[10px] uppercase tracking-wider text-primary font-bold">{l.category.replace('-', ' ')}</p>
+                <p className="font-display font-semibold mt-1 leading-tight">{l.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{l.description}</p>
+                <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {l.duration_minutes} min</span>
+                  <span>•</span>
+                  <span className="capitalize">{l.level}</span>
+                  {l.instructor && <><span>•</span><span>{l.instructor}</span></>}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Articles section */}
+      {filteredArticles.length > 0 && (
+        <div className="px-5 pb-10">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="h-5 w-5 text-accent-foreground" />
+            <h2 className="font-display text-lg font-bold">Read & learn</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {filteredArticles.map(a => (
+              <Card key={a.id} className="p-4 rounded-3xl cursor-pointer hover:shadow-md transition-all border-border/50" onClick={() => setReading(a)}>
+                <p className="text-[10px] uppercase tracking-wider text-accent-foreground font-bold">{a.category.replace('-', ' ')}</p>
+                <p className="font-display font-semibold mt-1 leading-snug">{a.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> {a.minutes} min read
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Video player modal */}
+      {playing && (
+        <div className="fixed inset-0 z-50 bg-foreground/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPlaying(null)}>
+          <div className="bg-card rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="aspect-video bg-black">
+              {ytEmbed(playing.video_url) ? (
+                <iframe src={ytEmbed(playing.video_url)!} className="h-full w-full" allow="autoplay; encrypted-media" allowFullScreen title={playing.title} />
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">No video</div>
               )}
             </div>
-            <div className="p-4">
-              <p className="text-[10px] uppercase tracking-wider text-primary font-bold">{l.category.replace('-', ' ')}</p>
-              <p className="font-display font-semibold mt-1 leading-tight">{l.title}</p>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{l.description}</p>
-              <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {l.duration_minutes} min</span>
-                <span>•</span>
-                <span className="capitalize">{l.level}</span>
-                {l.instructor && <><span>•</span><span>{l.instructor}</span></>}
+            <div className="p-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display font-bold leading-tight">{playing.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">{playing.instructor} • {playing.duration_minutes} min</p>
               </div>
+              <button onClick={() => setPlaying(null)} className="h-8 w-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4" /></button>
             </div>
-          </Card>
-        ))}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Article reader modal */}
+      {reading && (
+        <div className="fixed inset-0 z-50 bg-foreground/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setReading(null)}>
+          <div className="bg-card rounded-3xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-accent-foreground font-bold">{reading.category.replace('-', ' ')}</p>
+                <h2 className="font-display text-xl font-bold mt-1">{reading.title}</h2>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Clock className="h-3 w-3" /> {reading.minutes} min read</p>
+              </div>
+              <button onClick={() => setReading(null)} className="h-8 w-8 rounded-full bg-muted flex items-center justify-center"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{reading.body}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
