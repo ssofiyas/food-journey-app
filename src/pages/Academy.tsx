@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Lock, Play, Clock, GraduationCap, Sparkles } from 'lucide-react';
+import { Lock, Play, Clock, GraduationCap, Sparkles, X, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -26,9 +26,23 @@ function ytEmbed(url: string | null): string | null {
 
 const CATEGORIES = ['all', 'sleep', 'recovery', 'nutrition', 'mindfulness', 'movement', 'womens-health'];
 
+const ARTICLES = [
+  { id: 'a1', title: 'Protein 101: How much do you really need?', minutes: 6, category: 'nutrition', body: 'Most active adults thrive on 1.6–2.2 g protein per kg bodyweight. Spread it across 3–4 meals of 25–40 g each. Best sources: eggs, fish, chicken, dairy, legumes, tofu, lean beef. Protein not only repairs muscle but also keeps you full and stabilizes blood sugar.' },
+  { id: 'a2', title: 'Glycemic load — beyond carbs vs. no-carbs', minutes: 5, category: 'nutrition', body: 'Glycemic load (GL) considers both how fast a carb spikes blood sugar AND how much carb is in the serving. Pair carbs with protein, fat, and fiber to flatten the curve. Berries, oats, lentils, and sweet potatoes are great low-GL options.' },
+  { id: 'a3', title: 'The 3-2-1 sleep stack', minutes: 4, category: 'sleep', body: '3 hours before bed: stop eating. 2 hours before: stop working. 1 hour before: dim lights, no screens. This simple ritual aligns melatonin and cortisol so deep sleep arrives naturally.' },
+  { id: 'a4', title: 'Walking after meals: a tiny lever', minutes: 3, category: 'movement', body: 'A 10-minute walk within 30 minutes of eating can lower post-meal glucose spikes by 12–22%. It also aids digestion and improves mood.' },
+  { id: 'a5', title: 'Hormonisykli ja harjoittelu (FI)', minutes: 7, category: 'womens-health', body: 'Follikulaarivaiheessa keho sietää kovaa harjoittelua hyvin. Ovulaation jälkeen luteaalivaiheessa syke on korkeampi, lämmönsäätely heikompi — siirry kestävyyteen ja palauttavaan harjoitteluun. Kuukautisten aikana kuuntele kehoa: kevyt liike helpottaa.' },
+  { id: 'a6', title: 'Hydration math (it is not just 8 glasses)', minutes: 4, category: 'recovery', body: 'Aim for 30–35 ml per kg bodyweight, plus 500 ml per hour of intense exercise. Add a pinch of salt + lemon for electrolytes — especially in summer or after sauna.' },
+  { id: 'a7', title: 'Box breathing for stress', minutes: 3, category: 'mindfulness', body: 'Inhale 4s, hold 4s, exhale 4s, hold 4s. Repeat 5 cycles. Activates the parasympathetic nervous system and lowers cortisol within 90 seconds.' },
+];
+
+const CATEGORIES = ['all', 'sleep', 'recovery', 'nutrition', 'mindfulness', 'movement', 'womens-health'];
+
 export default function Academy() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [filter, setFilter] = useState('all');
+  const [playing, setPlaying] = useState<Lecture | null>(null);
+  const [reading, setReading] = useState<typeof ARTICLES[0] | null>(null);
 
   useEffect(() => {
     supabase.from('academy_lectures' as any).select('*').order('created_at', { ascending: true }).then(({ data }) => {
@@ -37,6 +51,7 @@ export default function Academy() {
   }, []);
 
   const filtered = filter === 'all' ? lectures : lectures.filter(l => l.category === filter);
+  const filteredArticles = filter === 'all' ? ARTICLES : ARTICLES.filter(a => a.category === filter);
 
   return (
     <div className="flex-1 max-w-3xl border-r border-border min-h-screen">
