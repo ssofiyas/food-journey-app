@@ -36,7 +36,6 @@ const ARTICLES = [
   { id: 'a7', title: 'Box breathing for stress', minutes: 3, category: 'mindfulness', body: 'Inhale 4s, hold 4s, exhale 4s, hold 4s. Repeat 5 cycles. Activates the parasympathetic nervous system and lowers cortisol within 90 seconds.' },
 ];
 
-const CATEGORIES = ['all', 'sleep', 'recovery', 'nutrition', 'mindfulness', 'movement', 'womens-health'];
 
 export default function Academy() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
