@@ -15,6 +15,13 @@ interface Lecture {
   is_premium: boolean;
   level: string;
   thumbnail_url: string | null;
+  video_url: string | null;
+}
+
+function ytEmbed(url: string | null): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|v=)([\w-]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
 }
 
 const CATEGORIES = ['all', 'sleep', 'recovery', 'nutrition', 'mindfulness', 'movement', 'womens-health'];
