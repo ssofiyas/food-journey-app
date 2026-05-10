@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Watch, HeartPulse, Moon, Brain, Droplet, Plus, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Watch, HeartPulse, Moon, Brain, Droplet, Plus, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DEVICES = [
@@ -21,6 +22,8 @@ export default function HealthHub() {
   const [devices, setDevices] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [cycle, setCycle] = useState<any[]>([]);
+  const [samsungForm, setSamsungForm] = useState({ steps: '', sleep_hours: '', resting_heart_rate: '', calories_consumed: '' });
+  const [samsungSyncing, setSamsungSyncing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -80,11 +83,36 @@ export default function HealthHub() {
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : '—';
   };
 
+  const syncSamsung = async () => {
+    if (!user) return;
+    const body: Record<string, number> = {};
+    for (const k of ['steps', 'sleep_hours', 'resting_heart_rate', 'calories_consumed'] as const) {
+      const v = parseFloat(samsungForm[k]);
+      if (!isNaN(v) && v >= 0) body[k] = v;
+    }
+    if (Object.keys(body).length === 0) {
+      toast.error('Enter at least one value');
+      return;
+    }
+    setSamsungSyncing(true);
+    toast.loading('Syncing Samsung Watch…', { id: 'samsung' });
+    const { data, error } = await supabase.functions.invoke('health-connect-sync', { body });
+    setSamsungSyncing(false);
+    if (error || (data as any)?.error) {
+      toast.error(`Sync failed: ${(data as any)?.error || error?.message}`, { id: 'samsung' });
+      return;
+    }
+    toast.success('Synced! Data is live on Home.', { id: 'samsung' });
+    setSamsungForm({ steps: '', sleep_hours: '', resting_heart_rate: '', calories_consumed: '' });
+    const { data: l } = await supabase.from('daily_health_logs' as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(7);
+    setLogs((l as any[]) || []);
+  };
+
   return (
-    <div className="flex-1 max-w-3xl border-r border-border min-h-screen">
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-5 py-4">
-        <h1 className="font-display text-2xl font-bold">Health Hub</h1>
-        <p className="text-xs text-muted-foreground">Your personal vitals & devices</p>
+    <div className="flex-1 max-w-3xl min-h-screen pb-32 md:pb-8">
+      <div className="px-5 pt-6 pb-4">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">Health Hub</h1>
+        <p className="text-sm text-muted-foreground mt-1">Your personal vitals & devices</p>
       </div>
 
       <div className="p-5 space-y-5">
