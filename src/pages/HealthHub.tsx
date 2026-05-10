@@ -115,6 +115,19 @@ export default function HealthHub() {
               Sync Fitbit now
             </Button>
           )}
+          {devices.find(d => d.device_type === 'samsung_watch') && (
+            <div className="mt-3 rounded-2xl bg-muted/50 p-3 space-y-2">
+              <p className="text-xs font-semibold">Samsung Watch via Health Connect</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Connect your Samsung Watch to Health Connect on Android, then send data to this endpoint with your auth token:
+              </p>
+              <code className="block text-[10px] bg-background rounded-lg p-2 break-all border border-border">POST {SYNC_URL}</code>
+              <p className="text-[10px] text-muted-foreground">Body: {`{ steps, sleep_hours, resting_heart_rate, calories_consumed }`}</p>
+              <Button size="sm" variant="outline" className="rounded-full w-full" onClick={() => { navigator.clipboard.writeText(SYNC_URL); toast.success('Endpoint copied'); }}>
+                Copy endpoint URL
+              </Button>
+            </div>
+          )}
         </Card>
 
         {/* 7-day overview */}
