@@ -144,16 +144,26 @@ export default function HealthHub() {
             </Button>
           )}
           {devices.find(d => d.device_type === 'samsung_watch') && (
-            <div className="mt-3 rounded-2xl bg-muted/50 p-3 space-y-2">
-              <p className="text-xs font-semibold">Samsung Watch via Health Connect</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Connect your Samsung Watch to Health Connect on Android, then send data to this endpoint with your auth token:
-              </p>
-              <code className="block text-[10px] bg-background rounded-lg p-2 break-all border border-border">POST {SYNC_URL}</code>
-              <p className="text-[10px] text-muted-foreground">Body: {`{ steps, sleep_hours, resting_heart_rate, calories_consumed }`}</p>
-              <Button size="sm" variant="outline" className="rounded-full w-full" onClick={() => { navigator.clipboard.writeText(SYNC_URL); toast.success('Endpoint copied'); }}>
-                Copy endpoint URL
+            <div className="mt-3 rounded-2xl bg-muted/40 p-3 space-y-3">
+              <div>
+                <p className="text-xs font-semibold">Samsung Watch · Sync now</p>
+                <p className="text-[11px] text-muted-foreground">Reads from Health Connect. Enter today's values and tap Sync.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="number" placeholder="Steps" value={samsungForm.steps} onChange={(e) => setSamsungForm({ ...samsungForm, steps: e.target.value })} className="h-9 rounded-xl text-sm" />
+                <Input type="number" step="0.1" placeholder="Sleep (h)" value={samsungForm.sleep_hours} onChange={(e) => setSamsungForm({ ...samsungForm, sleep_hours: e.target.value })} className="h-9 rounded-xl text-sm" />
+                <Input type="number" placeholder="Resting HR" value={samsungForm.resting_heart_rate} onChange={(e) => setSamsungForm({ ...samsungForm, resting_heart_rate: e.target.value })} className="h-9 rounded-xl text-sm" />
+                <Input type="number" placeholder="Calories" value={samsungForm.calories_consumed} onChange={(e) => setSamsungForm({ ...samsungForm, calories_consumed: e.target.value })} className="h-9 rounded-xl text-sm" />
+              </div>
+              <Button size="sm" className="rounded-full w-full" onClick={syncSamsung} disabled={samsungSyncing}>
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${samsungSyncing ? 'animate-spin' : ''}`} />
+                {samsungSyncing ? 'Syncing…' : 'Sync to Home'}
               </Button>
+              <details className="text-[10px] text-muted-foreground">
+                <summary className="cursor-pointer">Webhook URL (for native Android wrapper)</summary>
+                <code className="block mt-1 bg-background rounded-lg p-2 break-all border border-border">POST {SYNC_URL}</code>
+                <button onClick={() => { navigator.clipboard.writeText(SYNC_URL); toast.success('Copied'); }} className="mt-1 text-primary font-semibold">Copy URL</button>
+              </details>
             </div>
           )}
         </Card>
