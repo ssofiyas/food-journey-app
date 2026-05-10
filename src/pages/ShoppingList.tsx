@@ -165,7 +165,7 @@ export default function ShoppingList() {
   const categories = [...new Set(uncheckedItems.map(i => i.category))].sort();
 
   return (
-    <div className="flex-1 border-r border-border max-w-2xl">
+    <div className="flex-1 max-w-2xl">
       <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="px-4 pt-3 pb-2 flex items-center justify-between">
           <h1 className="font-display text-xl font-bold text-foreground">Shopping</h1>

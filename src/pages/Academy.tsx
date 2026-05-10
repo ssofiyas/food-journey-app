@@ -53,7 +53,7 @@ export default function Academy() {
   const filteredArticles = filter === 'all' ? ARTICLES : ARTICLES.filter(a => a.category === filter);
 
   return (
-    <div className="flex-1 max-w-3xl border-r border-border min-h-screen">
+    <div className="flex-1 max-w-3xl min-h-screen">
       <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-5 py-4">
         <div className="flex items-center gap-2">
           <GraduationCap className="h-6 w-6 text-primary" />

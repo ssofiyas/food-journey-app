@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Watch, HeartPulse, Moon, Brain, Droplet, Plus, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Watch, HeartPulse, Moon, Brain, Droplet, Plus, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DEVICES = [
@@ -21,6 +22,8 @@ export default function HealthHub() {
   const [devices, setDevices] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [cycle, setCycle] = useState<any[]>([]);
+  const [samsungForm, setSamsungForm] = useState({ steps: '', sleep_hours: '', resting_heart_rate: '', calories_consumed: '' });
+  const [samsungSyncing, setSamsungSyncing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -80,11 +83,36 @@ export default function HealthHub() {
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : '—';
   };
 
+  const syncSamsung = async () => {
+    if (!user) return;
+    const body: Record<string, number> = {};
+    for (const k of ['steps', 'sleep_hours', 'resting_heart_rate', 'calories_consumed'] as const) {
+      const v = parseFloat(samsungForm[k]);
+      if (!isNaN(v) && v >= 0) body[k] = v;
+    }
+    if (Object.keys(body).length === 0) {
+      toast.error('Enter at least one value');
+      return;
+    }
+    setSamsungSyncing(true);
+    toast.loading('Syncing Samsung Watch…', { id: 'samsung' });
+    const { data, error } = await supabase.functions.invoke('health-connect-sync', { body });
+    setSamsungSyncing(false);
+    if (error || (data as any)?.error) {
+      toast.error(`Sync failed: ${(data as any)?.error || error?.message}`, { id: 'samsung' });
+      return;
+    }
+    toast.success('Synced! Data is live on Home.', { id: 'samsung' });
+    setSamsungForm({ steps: '', sleep_hours: '', resting_heart_rate: '', calories_consumed: '' });
+    const { data: l } = await supabase.from('daily_health_logs' as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(7);
+    setLogs((l as any[]) || []);
+  };
+
   return (
-    <div className="flex-1 max-w-3xl border-r border-border min-h-screen">
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-5 py-4">
-        <h1 className="font-display text-2xl font-bold">Health Hub</h1>
-        <p className="text-xs text-muted-foreground">Your personal vitals & devices</p>
+    <div className="flex-1 max-w-3xl min-h-screen pb-32 md:pb-8">
+      <div className="px-5 pt-6 pb-4">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">Health Hub</h1>
+        <p className="text-sm text-muted-foreground mt-1">Your personal vitals & devices</p>
       </div>
 
       <div className="p-5 space-y-5">
@@ -116,16 +144,26 @@ export default function HealthHub() {
             </Button>
           )}
           {devices.find(d => d.device_type === 'samsung_watch') && (
-            <div className="mt-3 rounded-2xl bg-muted/50 p-3 space-y-2">
-              <p className="text-xs font-semibold">Samsung Watch via Health Connect</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Connect your Samsung Watch to Health Connect on Android, then send data to this endpoint with your auth token:
-              </p>
-              <code className="block text-[10px] bg-background rounded-lg p-2 break-all border border-border">POST {SYNC_URL}</code>
-              <p className="text-[10px] text-muted-foreground">Body: {`{ steps, sleep_hours, resting_heart_rate, calories_consumed }`}</p>
-              <Button size="sm" variant="outline" className="rounded-full w-full" onClick={() => { navigator.clipboard.writeText(SYNC_URL); toast.success('Endpoint copied'); }}>
-                Copy endpoint URL
+            <div className="mt-3 rounded-2xl bg-muted/40 p-3 space-y-3">
+              <div>
+                <p className="text-xs font-semibold">Samsung Watch · Sync now</p>
+                <p className="text-[11px] text-muted-foreground">Reads from Health Connect. Enter today's values and tap Sync.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="number" placeholder="Steps" value={samsungForm.steps} onChange={(e) => setSamsungForm({ ...samsungForm, steps: e.target.value })} className="h-9 rounded-xl text-sm" />
+                <Input type="number" step="0.1" placeholder="Sleep (h)" value={samsungForm.sleep_hours} onChange={(e) => setSamsungForm({ ...samsungForm, sleep_hours: e.target.value })} className="h-9 rounded-xl text-sm" />
+                <Input type="number" placeholder="Resting HR" value={samsungForm.resting_heart_rate} onChange={(e) => setSamsungForm({ ...samsungForm, resting_heart_rate: e.target.value })} className="h-9 rounded-xl text-sm" />
+                <Input type="number" placeholder="Calories" value={samsungForm.calories_consumed} onChange={(e) => setSamsungForm({ ...samsungForm, calories_consumed: e.target.value })} className="h-9 rounded-xl text-sm" />
+              </div>
+              <Button size="sm" className="rounded-full w-full" onClick={syncSamsung} disabled={samsungSyncing}>
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${samsungSyncing ? 'animate-spin' : ''}`} />
+                {samsungSyncing ? 'Syncing…' : 'Sync to Home'}
               </Button>
+              <details className="text-[10px] text-muted-foreground">
+                <summary className="cursor-pointer">Webhook URL (for native Android wrapper)</summary>
+                <code className="block mt-1 bg-background rounded-lg p-2 break-all border border-border">POST {SYNC_URL}</code>
+                <button onClick={() => { navigator.clipboard.writeText(SYNC_URL); toast.success('Copied'); }} className="mt-1 text-primary font-semibold">Copy URL</button>
+              </details>
             </div>
           )}
         </Card>
