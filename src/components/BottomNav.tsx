@@ -1,56 +1,37 @@
-import { Home, Compass, BookOpen, LayoutGrid, Plus } from 'lucide-react';
-import { NavLink } from '@/components/NavLink';
+import { Home, PieChart, Heart, User, Settings } from 'lucide-react';
+import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 
-const leftItems = [
-  { to: '/home', icon: Home, label: 'Home' },
-  { to: '/explore', icon: Compass, label: 'Explore' },
-];
-
-const rightItems = [
-  { to: '/recipes', icon: BookOpen, label: 'Recipes' },
-  { to: '/tools', icon: LayoutGrid, label: 'Tools' },
+const items = [
+  { to: '/home', icon: Home },
+  { to: '/explore', icon: PieChart },
+  { to: '/feed', icon: Heart },
+  { to: '/profile', icon: User },
+  { to: '/settings', icon: Settings },
 ];
 
 export function BottomNav() {
+  const { pathname } = useLocation();
   return (
-    <nav className="fixed bottom-2 left-2 right-2 z-50 md:hidden glass-strong rounded-[2rem] safe-area-bottom shadow-glass">
-      <div className="flex items-center justify-between h-14 px-1.5">
-        {leftItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end
-            className="flex flex-col items-center gap-0.5 flex-1 min-w-0 py-1.5 text-muted-foreground transition-all"
-            activeClassName="text-primary nav-glow-primary"
-          >
-            <item.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
-            <span className="text-[9px] font-semibold tracking-tight leading-none">{item.label}</span>
-          </NavLink>
-        ))}
-
-        {/* Centered Add Post — hero pill */}
-        <NavLink
-          to="/feed"
-          end
-          className="flex flex-col items-center justify-center gap-0.5 -mt-6 mx-0.5 h-14 w-14 shrink-0 rounded-[1.25rem] gradient-primary text-primary-foreground shadow-glow-pink transition-transform hover:scale-105 active:scale-95 btn-bounce"
-          activeClassName="ring-4 ring-primary/25"
-        >
-          <Plus className="h-6 w-6" strokeWidth={2.2} />
-          <span className="text-[8px] font-bold tracking-tight leading-none">Post</span>
-        </NavLink>
-
-        {rightItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end
-            className="flex flex-col items-center gap-0.5 flex-1 min-w-0 py-1.5 text-muted-foreground transition-all"
-            activeClassName="text-accent nav-glow-accent"
-          >
-            <item.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
-            <span className="text-[9px] font-semibold tracking-tight leading-none">{item.label}</span>
-          </NavLink>
-        ))}
+    <nav className="fixed bottom-3 left-3 right-3 z-50 md:hidden rounded-full bg-card shadow-[0_8px_30px_-8px_rgba(0,0,0,0.15)] border border-border/40 safe-area-bottom">
+      <div className="flex items-center justify-between h-14 px-2">
+        {items.map((item) => {
+          const active = pathname === item.to || (item.to === '/home' && pathname === '/');
+          return (
+            <RouterNavLink
+              key={item.to}
+              to={item.to}
+              className={`flex items-center justify-center flex-1 h-12 transition-all ${active ? '' : 'text-muted-foreground'}`}
+            >
+              {active ? (
+                <span className="flex items-center justify-center h-12 w-12 rounded-full bg-foreground text-background shadow-lg">
+                  <item.icon className="h-5 w-5" strokeWidth={2} />
+                </span>
+              ) : (
+                <item.icon className="h-5 w-5" strokeWidth={1.8} />
+              )}
+            </RouterNavLink>
+          );
+        })}
       </div>
     </nav>
   );
