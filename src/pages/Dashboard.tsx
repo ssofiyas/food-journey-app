@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Sparkles, Flame, Footprints, Droplets, Moon, HeartPulse, Activity, Plus, ChefHat, Utensils } from 'lucide-react';
+import { Bell, Heart, Footprints, Moon, Droplets, ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface DailyLog {
@@ -13,286 +10,182 @@ interface DailyLog {
   steps: number;
   water_glasses: number;
   sleep_hours: number;
-  readiness_score: number | null;
   resting_heart_rate: number | null;
-}
-
-interface MealLog {
-  id: string;
-  custom_meal: string | null;
-  calories: number | null;
-  meal_type: string;
-  is_extra: boolean | null;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-function ReadinessRing({ value }: { value: number }) {
-  const r = 56;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(100, value));
-  const dash = (pct / 100) * c;
+// Simple decorative SVG line/wave generators
+function HeartRateBars() {
+  const heights = [12, 22, 8, 30, 14, 38, 18, 26, 10, 34, 16, 24, 12, 28, 18];
   return (
-    <div className="relative h-36 w-36">
-      <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
-        <defs>
-          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="100%" stopColor="hsl(var(--peach))" />
-          </linearGradient>
-        </defs>
-        <circle cx="70" cy="70" r={r} stroke="hsl(var(--muted))" strokeWidth="10" fill="none" />
-        <motion.circle
-          cx="70" cy="70" r={r}
-          stroke="url(#ringGrad)" strokeWidth="10" strokeLinecap="round" fill="none"
-          strokeDasharray={c}
-          initial={{ strokeDashoffset: c }}
-          animate={{ strokeDashoffset: c - dash }}
-          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="font-display text-4xl font-extrabold leading-none bg-gradient-to-br from-primary to-peach bg-clip-text text-transparent">{Math.round(pct)}</p>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Readiness</p>
-      </div>
+    <svg viewBox="0 0 150 50" className="w-full h-12">
+      {heights.map((h, i) => (
+        <rect key={i} x={i * 10 + 2} y={50 - h} width="3" height={h} rx="1.5" fill="hsl(230 25% 12%)" opacity={0.85} />
+      ))}
+    </svg>
+  );
+}
+
+function StepsWave() {
+  return (
+    <svg viewBox="0 0 150 50" className="w-full h-12">
+      <defs>
+        <linearGradient id="stepFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="hsl(272 60% 60%)" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="hsl(272 60% 60%)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="M0,40 C20,38 30,20 50,22 C70,24 80,8 100,12 C120,16 130,30 150,28 L150,50 L0,50 Z" fill="url(#stepFill)" />
+      <path d="M0,40 C20,38 30,20 50,22 C70,24 80,8 100,12 C120,16 130,30 150,28" fill="none" stroke="hsl(272 50% 45%)" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function SleepBars({ active = 4 }: { active?: number }) {
+  const bars = [22, 28, 24, 30, 36, 32, 26, 30];
+  return (
+    <div className="flex items-end justify-between gap-1.5 h-16 mt-2">
+      {bars.map((h, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          <div
+            className={`w-full rounded-md ${i === active ? 'bg-foreground' : 'bg-foreground/10'}`}
+            style={{ height: `${h * 1.4}px` }}
+          />
+          <span className="text-[8px] text-muted-foreground">{6 + i}{i < 6 ? 'am' : 'pm'}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-const fadeUp = {
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
-};
-
 export default function Dashboard() {
   const { user } = useAuth();
-  const [log, setLog] = useState<DailyLog>({ calories_consumed: 0, steps: 0, water_glasses: 0, sleep_hours: 0, readiness_score: null, resting_heart_rate: null });
-  const [calorieTarget, setCalorieTarget] = useState(2000);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [meals, setMeals] = useState<MealLog[]>([]);
-  const [coachMsg, setCoachMsg] = useState<string>('');
-  const [coachLoading, setCoachLoading] = useState(false);
+  const [profile, setProfile] = useState<{ full_name?: string | null; avatar_url?: string | null }>({});
+  const [log, setLog] = useState<DailyLog>({ calories_consumed: 0, steps: 0, water_glasses: 0, sleep_hours: 0, resting_heart_rate: null });
 
-  const loadMeals = async (uid: string) => {
-    const { data } = await supabase
-      .from('meal_plans')
-      .select('id, custom_meal, calories, meal_type, is_extra')
-      .eq('user_id', uid)
-      .eq('date', today())
-      .order('created_at', { ascending: false });
-    setMeals((data as MealLog[]) || []);
-  };
-
-  const loadHealth = async (uid: string) => {
-    const [{ data: dlog }, { data: target }, { data: acts }] = await Promise.all([
-      supabase.from('daily_health_logs' as any).select('*').eq('user_id', uid).eq('date', today()).maybeSingle(),
-      supabase.from('user_health_data').select('daily_calorie_target').eq('user_id', uid).maybeSingle(),
-      supabase.from('day_plan_activities' as any).select('*').eq('user_id', uid).eq('date', today()).order('scheduled_time', { ascending: true }),
+  const load = async (uid: string) => {
+    const [{ data: dlog }, { data: prof }] = await Promise.all([
+      supabase.from('daily_health_logs').select('*').eq('user_id', uid).eq('date', today()).maybeSingle(),
+      supabase.from('profiles').select('full_name, avatar_url').eq('user_id', uid).maybeSingle(),
     ]);
     if (dlog) setLog(dlog as any);
-    if (target?.daily_calorie_target) setCalorieTarget(target.daily_calorie_target);
-    setActivities((acts as any[]) || []);
+    if (prof) setProfile(prof);
   };
 
   useEffect(() => {
     if (!user) return;
-    loadHealth(user.id);
-    loadMeals(user.id);
-
-    // Realtime: meal_plans + daily_health_logs + activities for today
-    const channel = supabase
+    load(user.id);
+    const ch = supabase
       .channel(`home-live-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_plans', filter: `user_id=eq.${user.id}` }, () => loadMeals(user.id))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_health_logs', filter: `user_id=eq.${user.id}` }, () => loadHealth(user.id))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_plan_activities', filter: `user_id=eq.${user.id}` }, () => loadHealth(user.id))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_health_logs', filter: `user_id=eq.${user.id}` }, () => load(user.id))
       .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(ch); };
   }, [user]);
 
-  const updateField = async (field: keyof DailyLog, value: number) => {
-    if (!user) return;
-    const next = { ...log, [field]: value };
-    setLog(next);
-    await supabase.from('daily_health_logs' as any).upsert({ user_id: user.id, date: today(), ...next }, { onConflict: 'user_id,date' });
-  };
-
-  const askCoach = async () => {
-    setCoachLoading(true);
-    const { data } = await supabase.functions.invoke('health-coach', {
-      body: { metrics: { ...log, calorieTarget, activities } },
-    });
-    setCoachMsg((data as any)?.message || 'Stay consistent today!');
-    setCoachLoading(false);
-  };
-
-  const totalLoggedCals = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
-  const caloriesShown = Math.max(log.calories_consumed, totalLoggedCals);
-
-  const readiness = log.readiness_score ?? Math.min(100, Math.round(
-    (Math.min(log.steps, 10000) / 10000) * 30 +
-    (Math.min(log.water_glasses, 8) / 8) * 20 +
-    (Math.min(log.sleep_hours, 8) / 8) * 35 +
-    (caloriesShown > 0 ? 15 : 0)
-  ));
-
-  const stats = [
-    { icon: Flame, label: 'Calories', value: caloriesShown, target: calorieTarget, unit: 'kcal', color: 'text-pink' },
-    { icon: Footprints, label: 'Steps', value: log.steps, target: 10000, unit: '', color: 'text-primary' },
-    { icon: Droplets, label: 'Water', value: log.water_glasses, target: 8, unit: 'glasses', color: 'text-accent-foreground' },
-    { icon: Moon, label: 'Sleep', value: log.sleep_hours, target: 8, unit: 'h', color: 'text-lilac' },
-  ];
+  const firstName = (profile.full_name || user?.email?.split('@')[0] || 'there').split(' ')[0];
+  const sleepH = Math.floor(log.sleep_hours || 0);
+  const sleepM = Math.round(((log.sleep_hours || 0) - sleepH) * 60);
 
   return (
     <div className="flex-1 max-w-3xl min-h-screen pb-32 md:pb-8">
-      <motion.div {...fadeUp} className="px-5 pt-8 pb-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Today</h1>
-      </motion.div>
-
-      <div className="px-5 mt-4 space-y-5">
-        {/* Readiness hero */}
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.05 }} className="glass rounded-3xl p-5 flex items-center gap-5">
-          <ReadinessRing value={readiness} />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Your day</p>
-            <p className="font-display text-xl font-bold leading-tight mt-1">
-              {readiness >= 75 ? "You're set to thrive ✨" : readiness >= 50 ? "Solid base — keep going" : "Take it easy today"}
-            </p>
-            <Link to="/health-hub" className="inline-block mt-3 text-xs font-bold text-primary">Open Health Hub →</Link>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="px-5 pt-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="h-11 w-11 rounded-full object-cover" />
+            ) : (
+              <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary/30 to-accent/40" />
+            )}
+            <p className="text-sm">Hello <span className="font-bold">{firstName}</span></p>
           </div>
-        </motion.div>
+          <button className="h-11 w-11 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm">
+            <Bell className="h-5 w-5" strokeWidth={1.8} />
+          </button>
+        </div>
 
-        {/* AI Coach */}
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.1 }}>
-          <Card className="p-5 rounded-3xl gradient-primary border-0 shadow-glow-pink text-primary-foreground">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-white/25 backdrop-blur flex items-center justify-center shrink-0">
-                <Sparkles className="h-5 w-5" />
+        {/* Title */}
+        <h1 className="font-display text-[34px] leading-[1.05] font-extrabold tracking-tight mt-7">
+          Here's your health<br />at a glance
+        </h1>
+
+        {/* Bento grid */}
+        <div className="grid grid-cols-2 gap-3 mt-6">
+          {/* Heart rate */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-3xl p-4 bg-[hsl(210_40%_92%)]">
+            <div className="flex items-center justify-between">
+              <div className="h-9 w-9 rounded-full bg-foreground text-background flex items-center justify-center">
+                <Heart className="h-4 w-4" />
               </div>
-              <div className="flex-1">
-                <p className="font-display font-bold mb-1">AI Nutrition Coach</p>
-                <p className="text-sm leading-relaxed min-h-[44px] opacity-95">
-                  {coachMsg || (coachLoading ? 'Thinking…' : "Tap below for today's personal read.")}
-                </p>
-                <Button size="sm" variant="secondary" className="mt-3 rounded-full bg-white/95 text-primary hover:bg-white" onClick={askCoach} disabled={coachLoading}>
-                  {coachLoading ? 'Coaching…' : "Get today's tip"}
-                </Button>
+              <div className="text-right">
+                <p className="font-display text-xl font-extrabold leading-none">{log.resting_heart_rate ?? 72} <span className="text-xs font-semibold">bpm</span></p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Heart rate</p>
               </div>
             </div>
-          </Card>
-        </motion.div>
+            <div className="mt-3"><HeartRateBars /></div>
+          </motion.div>
 
-        {/* Stat grid */}
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.15 }} className="grid grid-cols-2 gap-3">
-          {stats.map((s) => {
-            const pct = Math.min(100, Math.round((Number(s.value) / s.target) * 100));
-            const field = s.label === 'Calories' ? 'calories_consumed' : s.label === 'Steps' ? 'steps' : s.label === 'Water' ? 'water_glasses' : 'sleep_hours';
-            return (
-              <Card key={s.label} className="p-4 rounded-3xl border-border/50 glass">
-                <div className="flex items-center justify-between mb-2">
-                  <s.icon className={`h-5 w-5 ${s.color}`} strokeWidth={1.8} />
-                  <button
-                    onClick={() => {
-                      const inc = s.label === 'Calories' ? 100 : s.label === 'Steps' ? 500 : s.label === 'Water' ? 1 : 0.5;
-                      updateField(field as any, Number(s.value) + inc);
-                    }}
-                    className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
+          {/* Steps */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-3xl p-4 bg-[hsl(272_50%_92%)]">
+            <div className="flex items-center justify-between">
+              <div className="h-9 w-9 rounded-full bg-foreground text-background flex items-center justify-center">
+                <Footprints className="h-4 w-4" />
+              </div>
+              <div className="text-right">
+                <p className="font-display text-xl font-extrabold leading-none">{(log.steps || 2200).toLocaleString()}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Steps</p>
+              </div>
+            </div>
+            <div className="mt-3"><StepsWave /></div>
+          </motion.div>
+
+          {/* Sleep — wide */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="col-span-2 rounded-3xl p-4 bg-[hsl(95_40%_88%)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-foreground text-background flex items-center justify-center">
+                  <Moon className="h-4 w-4" />
                 </div>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="font-display text-2xl font-bold">{s.value}<span className="text-sm font-normal text-muted-foreground">/{s.target}{s.unit && ` ${s.unit}`}</span></p>
-                <Progress value={pct} className="h-1.5 mt-2" />
-              </Card>
-            );
-          })}
-        </motion.div>
-
-        {/* Today's meals (live from Kitchen) */}
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.2 }}>
-          <Card className="p-5 rounded-3xl glass">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Utensils className="h-4 w-4 text-primary" />
-                <p className="font-display font-bold">Today's meals</p>
+                <div>
+                  <p className="font-display text-xl font-extrabold leading-none">{sleepH}h {sleepM}m</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Total sleep</p>
+                </div>
               </div>
-              <Link to="/kitchen" className="text-xs font-bold text-primary">Open Kitchen →</Link>
+              <Link to="/health-hub" className="text-[11px] font-semibold text-foreground/70">Details →</Link>
             </div>
-            {meals.length === 0 ? (
-              <Link to="/kitchen" className="block rounded-2xl border-2 border-dashed border-primary/30 p-5 text-center hover:bg-primary/5 transition-colors">
-                <ChefHat className="h-6 w-6 mx-auto text-primary mb-1" />
-                <p className="text-sm font-semibold">Scan or log your first meal</p>
-                <p className="text-xs text-muted-foreground">Goes here in real time.</p>
-              </Link>
-            ) : (
-              <ul className="space-y-2">
-                {meals.map((m) => (
-                  <li key={m.id} className="flex items-center gap-3 rounded-2xl bg-card/60 p-3">
-                    <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <Utensils className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{m.custom_meal || m.meal_type}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{m.meal_type}{m.is_extra ? ' • extra' : ''}</p>
-                    </div>
-                    <p className="font-display text-sm font-bold">{m.calories ?? 0}<span className="text-[10px] text-muted-foreground"> kcal</span></p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </motion.div>
+            <SleepBars />
+          </motion.div>
+        </div>
 
-        {/* Vitals */}
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.25 }}>
-          <Card className="p-5 rounded-3xl glass">
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-display font-bold">Vitals</p>
-              <Link to="/health-hub" className="text-xs font-bold text-primary">Health Hub →</Link>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-card/60 p-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground"><HeartPulse className="h-4 w-4 text-pink" /> Resting HR</div>
-                <p className="font-display text-xl font-bold mt-1">{log.resting_heart_rate ?? '—'} <span className="text-xs text-muted-foreground">bpm</span></p>
-              </div>
-              <div className="rounded-2xl bg-card/60 p-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Activity className="h-4 w-4 text-primary" /> Readiness</div>
-                <p className="font-display text-xl font-bold mt-1">{readiness}<span className="text-xs text-muted-foreground">/100</span></p>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
+        {/* Daily recommendations */}
+        <div className="mt-7 mb-3 flex items-center justify-between">
+          <h2 className="font-display text-base font-bold">Daily recommendations</h2>
+          <Link to="/health-hub" className="text-xs text-muted-foreground">See all</Link>
+        </div>
 
-        {/* Day plan */}
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.3 }}>
-          <Card className="p-5 rounded-3xl glass">
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-display font-bold">Day plan</p>
-              <Link to="/planner" className="text-xs font-bold text-primary">Planner →</Link>
-            </div>
-            {activities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No activities planned yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {activities.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 rounded-2xl bg-card/60 p-3">
-                    <div className="h-8 w-8 rounded-xl bg-accent/30 flex items-center justify-center">
-                      <Activity className="h-4 w-4 text-accent-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{a.title}</p>
-                      <p className="text-xs text-muted-foreground">{a.activity_type}{a.duration_minutes ? ` • ${a.duration_minutes} min` : ''}{a.scheduled_time ? ` • ${a.scheduled_time.slice(0,5)}` : ''}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </motion.div>
-      </div>
+        <Link to="/health-hub" className="flex items-center gap-3 rounded-3xl bg-card border border-border/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="h-11 w-11 rounded-full bg-[hsl(210_50%_88%)] flex items-center justify-center shrink-0">
+            <Droplets className="h-5 w-5 text-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">Stay Hydrated!</p>
+            <p className="text-xs text-muted-foreground">Drink at least 2L of water today.</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Link>
+
+        <Link to="/kitchen" className="mt-3 flex items-center gap-3 rounded-3xl bg-card border border-border/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="h-11 w-11 rounded-full bg-[hsl(22_70%_88%)] flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm">Scan your next meal</p>
+            <p className="text-xs text-muted-foreground">AI logs calories and macros for you.</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Link>
+      </motion.div>
     </div>
   );
 }

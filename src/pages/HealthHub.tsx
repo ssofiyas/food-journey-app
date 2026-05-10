@@ -8,10 +8,13 @@ import { toast } from 'sonner';
 
 const DEVICES = [
   { type: 'apple_watch', name: 'Apple Watch' },
+  { type: 'samsung_watch', name: 'Samsung Watch' },
   { type: 'whoop', name: 'WHOOP' },
   { type: 'oura', name: 'Oura Ring' },
   { type: 'fitbit', name: 'Fitbit' },
 ];
+
+const SYNC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-connect-sync`;
 
 export default function HealthHub() {
   const { user } = useAuth();
@@ -111,6 +114,19 @@ export default function HealthHub() {
             <Button size="sm" className="rounded-full mt-3 w-full" onClick={syncFitbit}>
               Sync Fitbit now
             </Button>
+          )}
+          {devices.find(d => d.device_type === 'samsung_watch') && (
+            <div className="mt-3 rounded-2xl bg-muted/50 p-3 space-y-2">
+              <p className="text-xs font-semibold">Samsung Watch via Health Connect</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Connect your Samsung Watch to Health Connect on Android, then send data to this endpoint with your auth token:
+              </p>
+              <code className="block text-[10px] bg-background rounded-lg p-2 break-all border border-border">POST {SYNC_URL}</code>
+              <p className="text-[10px] text-muted-foreground">Body: {`{ steps, sleep_hours, resting_heart_rate, calories_consumed }`}</p>
+              <Button size="sm" variant="outline" className="rounded-full w-full" onClick={() => { navigator.clipboard.writeText(SYNC_URL); toast.success('Endpoint copied'); }}>
+                Copy endpoint URL
+              </Button>
+            </div>
           )}
         </Card>
 
