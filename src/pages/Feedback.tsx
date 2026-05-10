@@ -70,7 +70,7 @@ export default function Feedback() {
   };
 
   return (
-    <div className="flex-1 border-r border-border max-w-2xl">
+    <div className="flex-1 max-w-2xl">
       <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md px-4 py-3">
         <h1 className="font-display text-xl font-bold text-foreground">Feedback</h1>
         <p className="text-xs text-muted-foreground mt-0.5">Report bugs, suggest features, or flag content</p>

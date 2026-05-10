@@ -70,7 +70,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex-1 border-r border-border max-w-2xl">
+    <div className="flex-1 max-w-2xl">
       <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-background/80 backdrop-blur-md px-4 py-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-9 w-9">
           <ArrowLeft className="h-5 w-5" />
