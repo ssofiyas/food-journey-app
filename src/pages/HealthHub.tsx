@@ -8,10 +8,13 @@ import { toast } from 'sonner';
 
 const DEVICES = [
   { type: 'apple_watch', name: 'Apple Watch' },
+  { type: 'samsung_watch', name: 'Samsung Watch' },
   { type: 'whoop', name: 'WHOOP' },
   { type: 'oura', name: 'Oura Ring' },
   { type: 'fitbit', name: 'Fitbit' },
 ];
+
+const SYNC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-connect-sync`;
 
 export default function HealthHub() {
   const { user } = useAuth();
